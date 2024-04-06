@@ -1,15 +1,13 @@
 # Manifest-Manipulator
 
-<br>
+<br><br>
 
-# 📌 Git Commit Message Format
+# [1] Git Commit Message Format
 
 협업 시 일관된 commit message 작성을 위해 템플릿을 이용합니다.  
 commit message format은 [AngularJS commit message format](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#commit)을 따릅니다.
 
-<br>
-
-### ✅ 1. 프로젝트 적용
+### 1. 프로젝트 적용
 
 1. 모든 프로젝트를 global로 적용하는 경우, **사용자 HOME 디렉토리** 에 생성한다.
 
@@ -23,7 +21,7 @@ touch ~/.gitmessage.txt
 touch .gitmessage.txt
 ```
 
-### ✅ 2. 템플릿 작성
+### 2. 템플릿 작성
 
 위에서 생성한 `gitmessage.txt`의 내용을 작성합니다.  
 이때 현재 repository에 있는 `.gitmessage.txt` 파일 내용 혹은 아래 코드를 복사하여 붙여넣습니다.
@@ -61,9 +59,7 @@ touch .gitmessage.txt
 
 </details>
 
-<br>
-
-### ✅ 3. git config를 template으로 설정하기
+### 3. git config를 template으로 설정하기
 
 1. 모든 프로젝트를 global로 적용하는 경우
 
@@ -77,7 +73,7 @@ git config --global commit.template ~/.gitmessage.txt
 git config commit.template .gitmessage.txt
 ```
 
-### ✅ 4. (활용) commit message 작성
+### 4. (활용) commit message 작성
 
 위 과정에서 git commit message를 config로 등록해주어, 템플릿 내용을 바탕을 commit message를 작성할 수 있다.
 
@@ -127,9 +123,9 @@ Closes #392
 
 <br><br>
 
-# 📌 Git branch Rule
+# [2] Git branch Rule
 
-## #️⃣ 브랜치 종류
+## 브랜치 종류
 
 1. `Main branch`
    - 기본 브랜치로 사용하며, 언제나 배포 가능한 상태로 유지
@@ -144,30 +140,32 @@ Closes #392
    - main 브랜치에서 분기한 긴급 수정 브랜치입니다.
    - 버그 수정이나 보안 이슈 등이 발생했을 때 사용합니다. 이후 main 브랜치와 develop 브랜치로 merge합니다.
 
-<br>
+<br><br>
 
-# 📌 Node Version Control
+# [3] Node Version Control
 
-### ✅ 1. Assign node version
+### 1. Assign node version
 
 ```shell
 nvm use
 ```
 
-### ✅ 2. Install packages with dependencies
+### 2. Install packages with dependencies
 
 ```shell
 nvm install
 ```
 
-### ✅ 3. Check Node version
+### 3. Check Node version
 
 ```shell
 node -v
 v20.12.1
 ```
 
-# #️⃣ 주의 사항 🌟
+<br><br>
+
+# [4] 주의 사항
 
 - 코드 작업 시, 한 번에 많은 양을 commit하기 보다는 **작업 단위** 로 나누어 commit 부탁드립니다.
 - git revert와 reset 하는 과정이 없도록 합니다.

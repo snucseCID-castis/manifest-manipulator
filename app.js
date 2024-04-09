@@ -39,9 +39,10 @@ async function fetchAndParseM3U8(url) {
 function ensureAbsoluteUrl(baseUrl, url) {
   if (url.startsWith("http")) {
     return url;
+  } else {
+    const urlObject = new URL(url, baseUrl);
+    return urlObject.href;
   }
-  const urlObject = new URL(url, baseUrl);
-  return urlObject.href;
 }
 
 function ensureRelativeUrl(url) {
@@ -67,7 +68,7 @@ async function saveAvailableContents() {
         availableVideos[vPathname] = availableVideos[vPathname] || [];
         availableVideos[vPathname].push({
           bandwidth: playlist.attributes.BANDWIDTH,
-          resolution: playlist.attributes.RESOLUTION,
+          resolution: `${playlist.attributes.RESOLUTION.width}x${playlist.attributes.RESOLUTION.height}`,
           baseUrl: baseUrl,
         });
       });
@@ -85,8 +86,8 @@ async function saveAvailableContents() {
           availableAudios[aPathname] = availableAudios[aPathname] || [];
           availableAudios[aPathname].push({
             groupId: groupId,
-            name: track.name,
-            language: track.language,
+            name: trackId,
+            default: track.default,
             baseUrl: baseUrl,
           });
         });
@@ -103,7 +104,7 @@ async function createVideoPlaylist(pathname) {
     return null;
   }
 
-  let playlistContent = "#EXTM3U\n#EXT-X-VERSION:3\n";
+  let playlistContent = "#EXTM3U\n";
 
   // todo: cdn selction logic (currently, just select the first cdn)
   let { baseUrl } = videoCDNs[0];
@@ -143,7 +144,7 @@ async function createAudioPlaylist(pathname) {
     console.error("No audio pathname information found for:", pathname);
     return null;
   }
-  let playlistContent = "#EXTM3U\n#EXT-X-VERSION:3\n";
+  let playlistContent = "#EXTM3U\n";
 
   // todo: cdn selction logic (currently, just select the first cdn)
   let { baseUrl } = audioCDNs[0];
@@ -198,14 +199,16 @@ app.get("/master.m3u8", (req, res) => {
   let masterPlaylistContent = "#EXTM3U\n";
 
   Object.keys(availableVideos).forEach((pathname) => {
-    video = availableVideos[pathname];
+    // suppose that the options of video playlist are same if the pathname is same
+    video = availableVideos[pathname][0];
     masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution}\n`;
     masterPlaylistContent += `/video/${pathname}\n`;
   });
 
   Object.keys(availableAudios).forEach((pathname) => {
-    audio = availableAudios[pathname];
-    masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="${audio.name}",LANGUAGE="${audio.language}",URI="/audio/${pathname}"\n`;
+    // suppose that the options of audio playlist are same if the pathname is same
+    audio = availableAudios[pathname][0];
+    masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audio.groupId}",NAME="${audio.name}",URI="/audio/${pathname}"\n`;
   });
 
   res.header("Content-Type", "application/vnd.apple.mpegurl");

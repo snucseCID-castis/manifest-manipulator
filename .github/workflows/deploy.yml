@@ -20,7 +20,7 @@ jobs:
       uses: google-github-actions/auth@v2.1.2
       with:
         project_id: manifest-manipulator
-        credentials: '${{ secrets.GCP_CREDENTIALS }}'
+        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
             
     - name: Deploy to App Engine
       id: deploy

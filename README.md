@@ -179,5 +179,8 @@ Run `npm start` in the project directory and access via localhost:3000.
 ## JS Formatting & Linting
 Use Biome, included in the dev dependencies. To install editor extensions, follow instructions [here](https://biomejs.dev/guides/integrate-in-editor/).
 
+## Databse
+Use MongoDB + Mongoose hosted by Atlas. Specify `DATABASE_URI` in `.env` file.
+
 ## Deployment
 `main` branch is deployed through GCP App Engine and will alwyas be available at https://manifest-manipulator.du.r.appspot.com.

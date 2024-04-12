@@ -175,3 +175,7 @@ v20.12.1
 
 ## JS Formatting & Linting
 We will use Biome, included in the dev dependencies. To install editor extensions, follow instructions [here](https://biomejs.dev/guides/integrate-in-editor/).
+
+## Testing Locally
+Run `npm run dev` to run with `nodemon`, which will reflect changes to the code immediately without having to restart server manually.
+Accessible at http://localhost:3000.

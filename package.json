@@ -4,7 +4,8 @@
   "description": "# git-guidelines",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +14,7 @@
     "express": "^4.19.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.6.4"
+    "@biomejs/biome": "1.6.4",
+    "nodemon": "^3.1.0"
   }
 }

@@ -172,3 +172,12 @@ v20.12.1
 - `Main`브랜치의 경우 배포 가능한 상태의 코드이므로, **바로 코드를 push하는 일이 없도록** 합니다.
 - 개발은 개발 브랜치인 `develop`을 중점으로, 각자 맡은 개발 파트를 이름으로 하는 새로운 `feature branch`를 만들어 작업합니다.
   - 작업 후에는 `pull request`를 통해 동료에게 코드리뷰를 요청한 후 완료되면 **해당 branch는 삭제** 합니다.
+
+## Running Server Locally
+Run `npm start` in the project directory and access via localhost:3000.
+
+## JS Formatting & Linting
+Use Biome, included in the dev dependencies. To install editor extensions, follow instructions [here](https://biomejs.dev/guides/integrate-in-editor/).
+
+## Deployment
+`main` branch is deployed through GCP App Engine and will alwyas be available at https://manifest-manipulator.du.r.appspot.com.

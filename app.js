@@ -70,6 +70,8 @@ async function saveAvailableContents() {
           bandwidth: playlist.attributes.BANDWIDTH,
           resolution: `${playlist.attributes.RESOLUTION.width}x${playlist.attributes.RESOLUTION.height}`,
           baseUrl: baseUrl,
+          audio: playlist.attributes["AUDIO"],
+          codecs: playlist.attributes.CODECS,
         });
       });
     }
@@ -201,7 +203,7 @@ app.get("/master.m3u8", (req, res) => {
   Object.keys(availableVideos).forEach((pathname) => {
     // suppose that the options of video playlist are same if the pathname is same
     video = availableVideos[pathname][0];
-    masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution}\n`;
+    masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO=${video.audio},CODECS=${video.codecs}}\n`;
     masterPlaylistContent += `/video/${pathname}\n`;
   });
 

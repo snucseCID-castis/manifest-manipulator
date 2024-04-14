@@ -12,7 +12,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
 
@@ -20,16 +19,19 @@ jobs:
       uses: google-github-actions/auth@v2.1.2
       with:
         project_id: manifest-manipulator
-        credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
             
     - name: Deploy to App Engine
       id: deploy
       uses: google-github-actions/deploy-appengine@v2.1.0
       with:
-        project_id: '${{ secrets.GCP_PROJECT_ID }}'
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
         working_directory: .
+        env_vars: |-
+          DATABASE_URI=${{ secrets.DATABASE_URI }}
+        version: ${{ secrets.GAE_VERSION }}
         
     - name: Test
-      run: curl "${{ steps.deploy.outputs.url }}"
+      run: curl ${{ steps.deploy.outputs.url }}
 
 

@@ -79,7 +79,11 @@ async function saveAvailableContents() {
 		// save cdn video urls with same pathname (ex. /v360.m3u8)
 		if (manifest?.playlists) {
 			for (const playlist of manifest.playlists) {
+<<<<<<< HEAD
 				vPathname = ensureRelativeUrl(playlist.uri);
+=======
+				const vPathname = ensureRelativeUrl(playlist.uri);
+>>>>>>> a4ca7bf (style: add const and indenting)
 
 				availableVideos[vPathname] = availableVideos[vPathname] || [];
 				availableVideos[vPathname].push({
@@ -218,14 +222,14 @@ app.get("/master.m3u8", (req, res) => {
 
 	for (const pathname of Object.keys(availableVideos)) {
 		// suppose that the options of video playlist are same if the pathname is same
-		video = availableVideos[pathname][0];
+		const video = availableVideos[pathname][0];
 		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO=${video.audio},CODECS=${video.codecs}}\n`;
 		masterPlaylistContent += `/video/${pathname}\n`;
 	}
 
 	for (const pathname of Object.keys(availableAudios)) {
 		// suppose that the options of audio playlist are same if the pathname is same
-		audio = availableAudios[pathname][0];
+		const audio = availableAudios[pathname][0];
 		masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audio.groupId}",NAME="${audio.name}",URI="/audio/${pathname}"\n`;
 	}
 

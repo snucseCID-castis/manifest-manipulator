@@ -6,7 +6,6 @@ import validateM3U8Format from "./utils/m3u8FormValidator.mjs";
 const chai = use(chaiHttp);
 
 describe("[Test] Master and video/audio api validation", () => {
-	let server;
 	let playlistURIs = [];
 
 	before(() => {
@@ -40,16 +39,11 @@ segment2.ts
 	});
 
 	before(async () => {
-		server = app.listen(0);
 		await saveAvailableContents();
 	});
 
-	after((done) => {
+	after(() => {
 		nock.cleanAll();
-		console.log(
-			`[Test] Server running on port ${server.address().port} closed`,
-		);
-		server.close(done);
 	});
 
 	it("Get /master.m3u8 Validation", (done) => {

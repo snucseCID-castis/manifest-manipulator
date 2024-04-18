@@ -79,11 +79,7 @@ async function saveAvailableContents() {
 		// save cdn video urls with same pathname (ex. /v360.m3u8)
 		if (manifest?.playlists) {
 			for (const playlist of manifest.playlists) {
-<<<<<<< HEAD
-				vPathname = ensureRelativeUrl(playlist.uri);
-=======
 				const vPathname = ensureRelativeUrl(playlist.uri);
->>>>>>> a4ca7bf (style: add const and indenting)
 
 				availableVideos[vPathname] = availableVideos[vPathname] || [];
 				availableVideos[vPathname].push({

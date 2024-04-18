@@ -1,26 +1,8 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
 const app = express();
-const port = process.env.PORT || 3000;
-const databaseURI = process.env.DATABASE_URI;
-
-mongoose
-	.connect(databaseURI)
-	.then(() => {
-		console.log("Connected to MongoDB");
-		// save available video and audio urls when the server starts
-		saveAvailableContents().then(() => {
-			app.listen(port, () => {
-				console.log(`Server running on port ${port}`);
-			});
-		});
-	})
-	.catch((err) => {
-		console.log("Error connecting to MongoDB", err);
-	});
 
 const cdnMasterM3U8Urls = [
 	"http://110.35.173.88:19090/live.stream/ts.noll_master.m3u8",
@@ -232,3 +214,5 @@ app.get("/master.m3u8", (req, res) => {
 	res.header("Content-Type", "application/vnd.apple.mpegurl");
 	res.send(masterPlaylistContent);
 });
+
+module.exports = { app, saveAvailableContents };

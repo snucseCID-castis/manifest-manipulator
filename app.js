@@ -201,7 +201,7 @@ app.get("/master.m3u8", (req, res) => {
 	for (const pathname of Object.keys(availableVideos)) {
 		// suppose that the options of video playlist are same if the pathname is same
 		const video = availableVideos[pathname][0];
-		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO=${video.audio},CODECS=${video.codecs}}\n`;
+		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO="${video.audio}",CODECS="${video.codecs}"\n`;
 		masterPlaylistContent += `/video/${pathname}\n`;
 	}
 

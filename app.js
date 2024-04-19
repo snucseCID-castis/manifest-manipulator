@@ -26,8 +26,8 @@ const cdnMasterM3U8Urls = [
 	"http://110.35.173.88:19090/live.stream/ts.noll_master.m3u8",
 ];
 
-let availableVideos = {};
-let availableAudios = {};
+const availableVideos = {};
+const availableAudios = {};
 
 // logging middleware
 app.use((req, res, next) => {
@@ -57,49 +57,47 @@ async function fetchAndParseM3U8(url) {
 function ensureAbsoluteUrl(baseUrl, url) {
 	if (url.startsWith("http")) {
 		return url;
-	} else {
-		const urlObject = new URL(url, baseUrl);
-		return urlObject.href;
 	}
+	const urlObject = new URL(url, baseUrl);
+	return urlObject.href;
 }
 
 function ensureRelativeUrl(url) {
 	if (url.startsWith("http")) {
 		const urlObject = new URL(url);
 		return urlObject.pathname;
-	} else {
-		return url;
 	}
+	return url;
 }
 
 // save available qualities from the cdn links
 async function saveAvailableContents() {
-	for (let url of cdnMasterM3U8Urls) {
+	for (const url of cdnMasterM3U8Urls) {
 		const manifest = await fetchAndParseM3U8(url);
 		const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
 
 		// save cdn video urls with same pathname (ex. /v360.m3u8)
-		if (manifest && manifest.playlists) {
-			manifest.playlists.forEach((playlist) => {
-				vPathname = ensureRelativeUrl(playlist.uri);
+		if (manifest?.playlists) {
+			for (const playlist of manifest.playlists) {
+				const vPathname = ensureRelativeUrl(playlist.uri);
 
 				availableVideos[vPathname] = availableVideos[vPathname] || [];
 				availableVideos[vPathname].push({
 					bandwidth: playlist.attributes.BANDWIDTH,
 					resolution: `${playlist.attributes.RESOLUTION.width}x${playlist.attributes.RESOLUTION.height}`,
 					baseUrl: baseUrl,
-					audio: playlist.attributes["AUDIO"],
+					audio: playlist.attributes.AUDIO,
 					codecs: playlist.attributes.CODECS,
 				});
-			});
+			}
 		}
 
 		// save cdn audio urls with same pathname (ex. /a360.m3u8)
-		if (manifest && manifest.mediaGroups && manifest.mediaGroups.AUDIO) {
-			Object.keys(manifest.mediaGroups.AUDIO).forEach((groupId) => {
+		if (manifest?.mediaGroups?.AUDIO) {
+			for (const groupId of Object.keys(manifest.mediaGroups.AUDIO)) {
 				const group = manifest.mediaGroups.AUDIO[groupId];
 
-				Object.keys(group).forEach((trackId) => {
+				for (const trackId of Object.keys(group)) {
 					const track = group[trackId];
 
 					aPathname = ensureRelativeUrl(track.uri);
@@ -110,8 +108,8 @@ async function saveAvailableContents() {
 						default: track.default,
 						baseUrl: baseUrl,
 					});
-				});
-			});
+				}
+			}
 		}
 	}
 }
@@ -127,7 +125,7 @@ async function createVideoPlaylist(pathname) {
 	let playlistContent = "#EXTM3U\n";
 
 	// todo: cdn selction logic (currently, just select the first cdn)
-	let { baseUrl } = videoCDNs[0];
+	const { baseUrl } = videoCDNs[0];
 
 	const variantManifest = await fetchAndParseM3U8(
 		ensureAbsoluteUrl(baseUrl, pathname),
@@ -146,13 +144,13 @@ async function createVideoPlaylist(pathname) {
 
 	// video track selection
 	// todo: may need to vary cdn for every segment
-	if (variantManifest && variantManifest.segments) {
-		variantManifest.segments.forEach((segment) => {
+	if (variantManifest?.segments) {
+		for (const segment of variantManifest.segments) {
 			playlistContent += `#EXTINF:${segment.duration},\n${ensureAbsoluteUrl(
 				baseUrl,
 				segment.uri,
 			)}\n`;
-		});
+		}
 	}
 
 	return playlistContent;
@@ -167,7 +165,7 @@ async function createAudioPlaylist(pathname) {
 	let playlistContent = "#EXTM3U\n";
 
 	// todo: cdn selction logic (currently, just select the first cdn)
-	let { baseUrl } = audioCDNs[0];
+	const { baseUrl } = audioCDNs[0];
 
 	const variantManifest = await fetchAndParseM3U8(
 		ensureAbsoluteUrl(baseUrl, pathname),
@@ -186,13 +184,13 @@ async function createAudioPlaylist(pathname) {
 
 	// audio track selection
 	// todo: may need to vary cdn for every segment
-	if (variantManifest && variantManifest.segments) {
-		variantManifest.segments.forEach((segment) => {
+	if (variantManifest?.segments) {
+		for (const segment of variantManifest.segments) {
 			playlistContent += `#EXTINF:${segment.duration},\n${ensureAbsoluteUrl(
 				baseUrl,
 				segment.uri,
 			)}\n`;
-		});
+		}
 	}
 
 	return playlistContent;
@@ -218,18 +216,18 @@ app.get("/audio/:pathname", async (req, res) => {
 app.get("/master.m3u8", (req, res) => {
 	let masterPlaylistContent = "#EXTM3U\n";
 
-	Object.keys(availableVideos).forEach((pathname) => {
+	for (const pathname of Object.keys(availableVideos)) {
 		// suppose that the options of video playlist are same if the pathname is same
-		video = availableVideos[pathname][0];
+		const video = availableVideos[pathname][0];
 		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO=${video.audio},CODECS=${video.codecs}}\n`;
 		masterPlaylistContent += `/video/${pathname}\n`;
-	});
+	}
 
-	Object.keys(availableAudios).forEach((pathname) => {
+	for (const pathname of Object.keys(availableAudios)) {
 		// suppose that the options of audio playlist are same if the pathname is same
-		audio = availableAudios[pathname][0];
+		const audio = availableAudios[pathname][0];
 		masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audio.groupId}",NAME="${audio.name}",URI="/audio/${pathname}"\n`;
-	});
+	}
 
 	res.header("Content-Type", "application/vnd.apple.mpegurl");
 	res.send(masterPlaylistContent);

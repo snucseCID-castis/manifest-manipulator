@@ -2,14 +2,33 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
+const { parse } = require("dotenv");
 const app = express();
 
-const cdnMasterM3U8Urls = [
-	"http://110.35.173.88:19090/live.stream/ts.noll_master.m3u8",
+const origin = "http://110.35.173.88:19090/live.stream/";
+
+// TODO: CDN urls should be stored in DB
+const availableCDNs = [
+	// origin url, but for test
+	{
+		url: "http://110.35.173.88:19090",
+		playlist_uri: "/live.stream/",
+		traffic_uri: null,
+		detailed_traffic_uri: null,
+		type: "origin",
+	},
+	{
+		url: "http://www.castislive-cache2.com:19091",
+		playlist_uri: "/live.stream/",
+		traffic_uri: "/api/traffic",
+		detailed_traffic_uri: "/api/traffic/detail",
+		type: "cache",
+	},
 ];
 
-const availableVideos = {};
-const availableAudios = {};
+// TODO: playlists should be stored in DB
+const masterPlaylists = {};
+const mediaPlaylists = new Set();
 
 // logging middleware
 app.use((req, res, next) => {
@@ -23,17 +42,70 @@ app.use((req, res, next) => {
 	next();
 });
 
-async function fetchAndParseM3U8(url) {
+// fetch master/media playlist
+async function fetchPlaylist(name) {
+	let content;
+	// TODO: DB query
+	if (name in masterPlaylists) {
+		content = masterPlaylists[name];
+	} else if (mediaPlaylists.has(name)) {
+		content = await fetchFromOrigin(name);
+	} else {
+		content = await storeNewMaster(name);
+	}
+	return content;
+}
+
+// fetch media playlist from origin
+async function fetchFromOrigin(name) {
+	const url = ensureAbsoluteUrl(origin, name);
 	try {
 		const response = await axios.get(url);
-		const parser = new m3u8Parser.Parser();
-		parser.push(response.data);
-		parser.end();
-		return parser.manifest;
+		return response.data;
 	} catch (error) {
-		console.error("Failed to fetch and parse M3U8:", url);
+		console.error("Failed to fetch media playlist from origin:", name);
 		return null;
 	}
+}
+
+// if master playlist is not in DB, fetch it from origin and store it and its media playlists in DB
+async function storeNewMaster(name) {
+	const url = ensureAbsoluteUrl(origin, name);
+	try {
+		const response = await axios.get(url);
+		if (response.status === 200) {
+			manifest = parseManifest(response.data);
+			if (!manifest.playlists) {
+				console.error("No playlists found in master playlist:", name);
+				return null;
+			}
+			// TODO: DB insert
+			masterPlaylists[name] = response.data;
+			for (const playlist of manifest.playlists) {
+				mediaPlaylists.add(playlist.uri);
+			}
+			const audios = manifest.mediaGroups.AUDIO;
+			for (const audio in audios) {
+				for (const track in audios[audio]) {
+					mediaPlaylists.add(audios[audio][track].uri);
+				}
+			}
+			return response.data;
+		}
+		console.error("Failed to fetch playlists from origin:", response.data); // invalid m3u8 request
+		return null;
+	} catch (error) {
+		console.error("Failed to fetch and store associated playlists:", name);
+		return null;
+	}
+}
+
+// parse manifest
+function parseManifest(m3u8) {
+	const parser = new m3u8Parser.Parser();
+	parser.push(m3u8);
+	parser.end();
+	return parser.manifest;
 }
 
 function ensureAbsoluteUrl(baseUrl, url) {
@@ -52,167 +124,53 @@ function ensureRelativeUrl(url) {
 	return url;
 }
 
-// save available qualities from the cdn links
-async function saveAvailableContents() {
-	for (const url of cdnMasterM3U8Urls) {
-		const manifest = await fetchAndParseM3U8(url);
-		const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
-
-		// save cdn video urls with same pathname (ex. /v360.m3u8)
-		if (manifest?.playlists) {
-			for (const playlist of manifest.playlists) {
-				const vPathname = ensureRelativeUrl(playlist.uri);
-
-				availableVideos[vPathname] = availableVideos[vPathname] || [];
-				availableVideos[vPathname].push({
-					bandwidth: playlist.attributes.BANDWIDTH,
-					resolution: `${playlist.attributes.RESOLUTION.width}x${playlist.attributes.RESOLUTION.height}`,
-					baseUrl: baseUrl,
-					audio: playlist.attributes.AUDIO,
-					codecs: playlist.attributes.CODECS,
-				});
-			}
-		}
-
-		// save cdn audio urls with same pathname (ex. /a360.m3u8)
-		if (manifest?.mediaGroups?.AUDIO) {
-			for (const groupId of Object.keys(manifest.mediaGroups.AUDIO)) {
-				const group = manifest.mediaGroups.AUDIO[groupId];
-
-				for (const trackId of Object.keys(group)) {
-					const track = group[trackId];
-
-					aPathname = ensureRelativeUrl(track.uri);
-					availableAudios[aPathname] = availableAudios[aPathname] || [];
-					availableAudios[aPathname].push({
-						groupId: groupId,
-						name: trackId,
-						default: track.default,
-						baseUrl: baseUrl,
-					});
-				}
-			}
-		}
-	}
-}
-
-// create video playlist for matching pathname
-async function createVideoPlaylist(pathname) {
-	const videoCDNs = availableVideos[pathname];
-	if (!videoCDNs) {
-		console.error("No video pathname information found for:", pathname);
-		return null;
-	}
-
+function reconstructMediaPlaylist(m3u8, cdnURL) {
+	manifest = parseManifest(m3u8);
 	let playlistContent = "#EXTM3U\n";
 
-	// todo: cdn selction logic (currently, just select the first cdn)
-	const { baseUrl } = videoCDNs[0];
-
-	const variantManifest = await fetchAndParseM3U8(
-		ensureAbsoluteUrl(baseUrl, pathname),
-	);
-
-	// todo: can we add all the attributes automatically?
-	if (variantManifest.version) {
-		playlistContent += `#EXT-X-VERSION:${variantManifest.version}\n`;
+	// TODO: can we add all the attributes automatically?
+	if (manifest.version) {
+		playlistContent += `#EXT-X-VERSION:${manifest.version}\n`;
 	}
-	if (variantManifest.mediaSequence) {
-		playlistContent += `#EXT-X-MEDIA-SEQUENCE:${variantManifest.mediaSequence}\n`;
+	if (manifest.mediaSequence) {
+		playlistContent += `#EXT-X-MEDIA-SEQUENCE:${manifest.mediaSequence}\n`;
 	}
-	if (variantManifest.targetDuration) {
-		playlistContent += `#EXT-X-TARGETDURATION:${variantManifest.targetDuration}\n`;
+	if (manifest.targetDuration) {
+		playlistContent += `#EXT-X-TARGETDURATION:${manifest.targetDuration}\n`;
 	}
 
-	// video track selection
-	// todo: may need to vary cdn for every segment
-	if (variantManifest?.segments) {
-		for (const segment of variantManifest.segments) {
-			playlistContent += `#EXTINF:${segment.duration},\n${ensureAbsoluteUrl(
-				baseUrl,
-				segment.uri,
-			)}\n`;
+	// substitute cdn url to every segment uri
+	// TODO: may need to vary cdn for every segment
+	if (manifest?.segments) {
+		for (const segment of manifest.segments) {
+			playlistContent += `#EXTINF:${segment.duration.toFixed(
+				3,
+			)},\n${ensureAbsoluteUrl(cdnURL, segment.uri)}\n`;
 		}
 	}
 
 	return playlistContent;
 }
 
-async function createAudioPlaylist(pathname) {
-	const audioCDNs = availableAudios[pathname];
-	if (!audioCDNs) {
-		console.error("No audio pathname information found for:", pathname);
-		return null;
-	}
-	let playlistContent = "#EXTM3U\n";
-
-	// todo: cdn selction logic (currently, just select the first cdn)
-	const { baseUrl } = audioCDNs[0];
-
-	const variantManifest = await fetchAndParseM3U8(
-		ensureAbsoluteUrl(baseUrl, pathname),
-	);
-
-	// todo: can we add all the attributes automatically?
-	if (variantManifest.version) {
-		playlistContent += `#EXT-X-VERSION:${variantManifest.version}\n`;
-	}
-	if (variantManifest.mediaSequence) {
-		playlistContent += `#EXT-X-MEDIA-SEQUENCE:${variantManifest.mediaSequence}\n`;
-	}
-	if (variantManifest.targetDuration) {
-		playlistContent += `#EXT-X-TARGETDURATION:${variantManifest.targetDuration}\n`;
-	}
-
-	// audio track selection
-	// todo: may need to vary cdn for every segment
-	if (variantManifest?.segments) {
-		for (const segment of variantManifest.segments) {
-			playlistContent += `#EXTINF:${segment.duration},\n${ensureAbsoluteUrl(
-				baseUrl,
-				segment.uri,
-			)}\n`;
-		}
-	}
-
-	return playlistContent;
+// TODO: dynamic CDN selection
+async function selectCDN() {
+	cdn = availableCDNs[1];
+	return cdn.url + cdn.playlist_uri;
 }
 
-// give video playlist for requested pathname
-app.get("/video/:pathname", async (req, res) => {
-	const pathname = req.params.pathname;
-	const playlistContent = await createVideoPlaylist(pathname);
-	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	res.send(playlistContent);
-});
-
-// give audio playlist for requested pathname
-app.get("/audio/:pathname", async (req, res) => {
-	const pathname = req.params.pathname;
-	const playlistContent = await createAudioPlaylist(pathname);
-	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	res.send(playlistContent);
-});
-
-// create master playlist including our playlist urls
-app.get("/master.m3u8", (req, res) => {
-	let masterPlaylistContent = "#EXTM3U\n";
-
-	for (const pathname of Object.keys(availableVideos)) {
-		// suppose that the options of video playlist are same if the pathname is same
-		const video = availableVideos[pathname][0];
-		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO="${video.audio}",CODECS="${video.codecs}"\n`;
-		masterPlaylistContent += `/video/${pathname}\n`;
+app.get("/:pathname", async (req, res) => {
+	const name = req.params.pathname;
+	const m3u8 = await fetchPlaylist(name);
+	if (name in masterPlaylists) {
+		res.header("Content-Type", "application/vnd.apple.mpegurl");
+		return res.send(m3u8);
 	}
-
-	for (const pathname of Object.keys(availableAudios)) {
-		// suppose that the options of audio playlist are same if the pathname is same
-		const audio = availableAudios[pathname][0];
-		masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audio.groupId}",NAME="${audio.name}",URI="/audio/${pathname}"\n`;
+	if (mediaPlaylists.has(name)) {
+		cdnURL = await selectCDN();
+		res.header("Content-Type", "application/vnd.apple.mpegurl");
+		return res.send(reconstructMediaPlaylist(m3u8, cdnURL));
 	}
-
-	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	res.send(masterPlaylistContent);
+	res.status(400).send("Bad Request");
 });
 
-module.exports = { app, saveAvailableContents };
+module.exports = { app };

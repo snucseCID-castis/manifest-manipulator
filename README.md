@@ -173,9 +173,23 @@ v20.12.1
 - 개발은 개발 브랜치인 `develop`을 중점으로, 각자 맡은 개발 파트를 이름으로 하는 새로운 `feature branch`를 만들어 작업합니다.
   - 작업 후에는 `pull request`를 통해 동료에게 코드리뷰를 요청한 후 완료되면 **해당 branch는 삭제** 합니다.
 
+
 ## JS Formatting & Linting
 We will use Biome, included in the dev dependencies. To install editor extensions, follow instructions [here](https://biomejs.dev/guides/integrate-in-editor/).
 
 ## Testing Locally
 Run `npm run dev` to run with `nodemon`, which will reflect changes to the code immediately without having to restart server manually.
 Accessible at http://localhost:3000.
+
+## Running Server Locally
+Run `npm start` in the project directory and access via localhost:3000.
+
+## JS Formatting & Linting
+Use Biome, included in the dev dependencies. To install editor extensions, follow instructions [here](https://biomejs.dev/guides/integrate-in-editor/).
+
+## Databse
+Use MongoDB + Mongoose hosted by Atlas. Specify `DATABASE_URI` in `.env` file.
+
+## Deployment
+`main` branch is deployed through GCP App Engine and will alwyas be available at https://manifest-manipulator.du.r.appspot.com.
+

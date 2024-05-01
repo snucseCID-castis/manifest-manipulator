@@ -179,25 +179,4 @@ app.get("/:pathname", async (req, res) => {
 	res.status(400).send("Bad Request");
 });
 
-// create master playlist including our playlist urls
-app.get("/master.m3u8", (req, res) => {
-	let masterPlaylistContent = "#EXTM3U\n";
-
-	for (const pathname of Object.keys(availableVideos)) {
-		// suppose that the options of video playlist are same if the pathname is same
-		const video = availableVideos[pathname][0];
-		masterPlaylistContent += `#EXT-X-STREAM-INF:BANDWIDTH=${video.bandwidth},RESOLUTION=${video.resolution},AUDIO="${video.audio}",CODECS="${video.codecs}"\n`;
-		masterPlaylistContent += `/video/${pathname}\n`;
-	}
-
-	for (const pathname of Object.keys(availableAudios)) {
-		// suppose that the options of audio playlist are same if the pathname is same
-		const audio = availableAudios[pathname][0];
-		masterPlaylistContent += `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="${audio.groupId}",NAME="${audio.name}",URI="/audio/${pathname}"\n`;
-	}
-
-	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	res.send(masterPlaylistContent);
-});
-
 module.exports = { app };

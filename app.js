@@ -30,9 +30,6 @@ const availableCDNs = [
 const masterPlaylists = {};
 const mediaPlaylists = new Set();
 
-const availableVideos = {};
-const availableAudios = {};
-
 // logging middleware
 app.use((req, res, next) => {
 	const start = Date.now();

@@ -93,8 +93,6 @@ async function storeNewMaster(name) {
 					mediaPlaylists.add(audios[audio][track].uri);
 				}
 			}
-			console.log(masterPlaylists);
-			console.log(mediaPlaylists);
 			return response.data;
 		}
 		console.error("Failed to fetch playlists from origin:", response.data); // invalid m3u8 request
@@ -171,7 +169,6 @@ app.get("/:pathname", async (req, res) => {
 		return res.send(m3u8);
 	}
 	if (mediaPlaylists.has(name)) {
-		console.log(name);
 		cdnURL = await selectCDN();
 		res.header("Content-Type", "application/vnd.apple.mpegurl");
 		return res.send(reconstructMediaPlaylist(m3u8, cdnURL));

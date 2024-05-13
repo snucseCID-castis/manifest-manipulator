@@ -19,17 +19,6 @@ app.use((req, res, next) => {
 // parse cookies
 app.use(cookieParser());
 
-
-// store connection instance in request object
-app.use(async (req, res, next) =>{
-	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);
-	next();
-});
-
-
-// parse cookies
-app.use(cookieParser());
-
 // store connection instance in request object
 app.use(async (req, res, next) => {
 	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);

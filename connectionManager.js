@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Connection = require("./models/Connection");
 const cookie = require("cookie");
+
 class ConnectionManager {
 	async getOrCreateConnection(req, res) {
 		const connectionId = req.cookies.connectionId;

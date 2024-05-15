@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Connection = require("./models/connection");
+const Connection = require("./model/Connection");
 
 class ConnectionManager {
 

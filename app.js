@@ -4,10 +4,8 @@ const ConnectionManager = require("./connectionManager");
 const PlaylistManager = require("./playlistManager");
 const app = express();
 
-
 const connectionManager = new ConnectionManager();
 const playlistManager = new PlaylistManager(); // updates playlists
-
 
 // logging middleware
 app.use((req, res, next) => {
@@ -24,16 +22,11 @@ app.use((req, res, next) => {
 // parse cookies
 app.use(cookieParser());
 
-
 // store connection instance in request object
-app.use(async (req, res, next) =>{
+app.use(async (req, res, next) => {
 	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);
 	next();
 });
-
-
-
-
 
 app.get("/:pathname", async (req, res) => {
 	const playlistName = req.params.pathname;
@@ -41,10 +34,10 @@ app.get("/:pathname", async (req, res) => {
 	if (!playlistContent) {
 		return res.status(404).send("Not Found");
 	}
-	
+
 	res.header("Content-Type", "application/vnd.apple.mpegurl");
 	return res.send(playlistContent);
-	
+
 	// if (mediaPlaylists.has(name)) {
 	// 	cdnURL = await selectCDN();
 	// 	res.header("Content-Type", "application/vnd.apple.mpegurl");

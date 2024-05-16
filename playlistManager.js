@@ -4,8 +4,8 @@ const MediaPlaylist = require("./models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
 
-const origin = process.env.ORIGIN_URL ||"http://110.35.173.88:19090/live.stream/";
-
+const origin =
+	process.env.ORIGIN_URL || "http://110.35.173.88:19090/live.stream/";
 
 // TODO: CDN urls should be stored in DB
 const availableCDNs = [
@@ -27,36 +27,34 @@ const availableCDNs = [
 ];
 
 async function updateAndGetMasterPlaylists() {
-    const masterPlaylists = await MasterPlaylist.find();
-    for (const playlist of masterPlaylists) {
-        const content = await fetchFromOrigin(playlist.name);
-        playlist.contents = content;
-        await playlist.save();
-    }
-    return masterPlaylists;
+	const masterPlaylists = await MasterPlaylist.find();
+	for (const playlist of masterPlaylists) {
+		const content = await fetchFromOrigin(playlist.name);
+		playlist.contents = content;
+		await playlist.save();
+	}
+	return masterPlaylists;
 }
 
 async function updateandGetMediaPlaylists() {
-    // Purge all media playlists
-    await MediaPlaylist.deleteMany();
+	// Purge all media playlists
+	await MediaPlaylist.deleteMany();
 
-    const masterPlaylists = await MasterPlaylist.find();
-    const createdMediaPlaylists = []; // Array to store created media playlists
+	const masterPlaylists = await MasterPlaylist.find();
+	const createdMediaPlaylists = []; // Array to store created media playlists
 
-    for (const playlist of masterPlaylists) {
-        const content = playlist.contents;
-        const manifest = parseManifest(content);
-        for (const mediaPlaylist of manifest.playlists) {
-            const name = ensureRelativeUrl(mediaPlaylist.uri);
-            const createdPlaylist = await MediaPlaylist.create({ name });
-            createdMediaPlaylists.push(createdPlaylist); // Store the created playlist
-        }
-    }
+	for (const playlist of masterPlaylists) {
+		const content = playlist.contents;
+		const manifest = parseManifest(content);
+		for (const mediaPlaylist of manifest.playlists) {
+			const name = ensureRelativeUrl(mediaPlaylist.uri);
+			const createdPlaylist = await MediaPlaylist.create({ name });
+			createdMediaPlaylists.push(createdPlaylist); // Store the created playlist
+		}
+	}
 
-    return createdMediaPlaylists;
+	return createdMediaPlaylists;
 }
-
-
 
 // fetch media playlist from origin
 async function fetchFromOrigin(name) {
@@ -85,7 +83,6 @@ function ensureAbsoluteUrl(baseUrl, url) {
 	return urlObject.href;
 }
 
-
 function ensureRelativeUrl(url) {
 	if (url.startsWith("http")) {
 		const urlObject = new URL(url);
@@ -93,9 +90,6 @@ function ensureRelativeUrl(url) {
 	}
 	return url;
 }
-
-
-
 
 function reconstructMediaPlaylist(m3u8, cdnURL) {
 	manifest = parseManifest(m3u8);
@@ -125,34 +119,32 @@ function reconstructMediaPlaylist(m3u8, cdnURL) {
 	return playlistContent;
 }
 
-// TODO: modularize 
+// TODO: modularize
 async function selectCDN() {
 	cdn = availableCDNs[1];
 	return cdn.url + cdn.playlist_uri;
 }
 
 class PlaylistManager {
-    constructor() { // On init, update master and media playlists
-        this.masterPlaylists = updateAndGetMasterPlaylists();
-        this.mediaPlaylists = updateandGetMediaPlaylists();
-    }
-    async fetchPlaylist(name) {
-        //check if document with name exists in masterPlaylists or mediaPlaylists
-        const masterPlaylist = await MasterPlaylist.findOne({ name });
-        if (masterPlaylist) {
-            return masterPlaylist.contents;
-        }
-        const mediaPlaylist = await MediaPlaylist.findOne({ name });
-        if (!mediaPlaylist) {
-            return null;
-        }
-        CDNURL = await selectCDN();
-        // TODO: fetch from selected CDN
-        contents = await fetchFromOrigin(mediaPlaylist.name);
-        return reconstructMediaPlaylist(contents, CDNURL);
+	constructor() {
+		// On init, update master and media playlists
+		this.masterPlaylists = updateAndGetMasterPlaylists();
+		this.mediaPlaylists = updateandGetMediaPlaylists();
+	}
+	async fetchPlaylist(name) {
+		//check if document with name exists in masterPlaylists or mediaPlaylists
 
-
-
-    }
-
+		const masterPlaylist = await MasterPlaylist.findOne({ name });
+		if (masterPlaylist) {
+			return masterPlaylist.contents;
+		}
+		const mediaPlaylist = await MediaPlaylist.findOne({ name });
+		if (!mediaPlaylist) {
+			return null;
+		}
+		CDNURL = await selectCDN();
+		// TODO: fetch from selected CDN
+		contents = await fetchFromOrigin(mediaPlaylist.name);
+		return reconstructMediaPlaylist(contents, CDNURL);
+	}
 }

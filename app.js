@@ -4,6 +4,7 @@ const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const app = express();
 
+const cdnAnalyzer = new CDNAnalyzer();
 // logging middleware
 app.use((req, res, next) => {
 	const start = Date.now();

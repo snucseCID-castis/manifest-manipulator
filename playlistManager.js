@@ -49,7 +49,16 @@ async function updateandGetMediaPlaylists() {
 		for (const mediaPlaylist of manifest.playlists) {
 			const name = ensureRelativeUrl(mediaPlaylist.uri);
 			const createdPlaylist = await MediaPlaylist.create({ name });
-			createdMediaPlaylists.push(createdPlaylist); // Store the created playlist
+			createdMediaPlaylists.push(createdPlaylist);
+		}
+
+		const audios = manifest.mediaGroups.AUDIO;
+		for (const audio in audios) {
+			for (const track in audios[audio]) {
+				const name = ensureRelativeUrl(audios[audio][track].uri);
+				const createdPlaylist = await MediaPlaylist.create({ name });
+				createdMediaPlaylists.push(createdPlaylist);
+			}
 		}
 	}
 

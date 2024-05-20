@@ -157,3 +157,5 @@ class PlaylistManager {
 		return reconstructMediaPlaylist(contents, CDNURL);
 	}
 }
+
+module.exports = PlaylistManager;

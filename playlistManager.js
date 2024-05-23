@@ -46,6 +46,7 @@ async function updateandGetMediaPlaylists() {
 	for (const playlist of masterPlaylists) {
 		const content = playlist.contents;
 		const manifest = parseManifest(content);
+
 		for (const mediaPlaylist of manifest.playlists) {
 			const name = ensureRelativeUrl(mediaPlaylist.uri);
 			const createdPlaylist = await MediaPlaylist.create({ name });
@@ -134,11 +135,19 @@ async function selectCDN() {
 	return cdn.url + cdn.playlist_uri;
 }
 
+async function playlistManagerFactory() {
+	const [masterPlaylists, mediaPlaylists] = await Promise.all([
+		updateAndGetMasterPlaylists(),
+		updateandGetMediaPlaylists(),
+	]);
+	return new PlaylistManager(masterPlaylists, mediaPlaylists);
+}
+
 class PlaylistManager {
-	constructor() {
+	constructor(masterPlaylists, mediaPlaylists) {
 		// On init, update master and media playlists
-		this.masterPlaylists = updateAndGetMasterPlaylists();
-		this.mediaPlaylists = updateandGetMediaPlaylists();
+		this.masterPlaylists = masterPlaylists;
+		this.mediaPlaylists = mediaPlaylists;
 	}
 	async fetchPlaylist(name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
@@ -158,4 +167,4 @@ class PlaylistManager {
 	}
 }
 
-module.exports = PlaylistManager;
+module.exports = playlistManagerFactory();

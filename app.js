@@ -1,11 +1,8 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const ConnectionManager = require("./connectionManager");
-const PlaylistManager = require("./playlistManager");
+const connectionManager = require("./connectionManager");
+const playlistManager = require("./playlistManager");
 const app = express();
-
-const connectionManager = new ConnectionManager();
-const playlistManager = new PlaylistManager(); // updates playlists
 
 // logging middleware
 app.use((req, res, next) => {

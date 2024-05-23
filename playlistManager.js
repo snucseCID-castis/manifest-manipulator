@@ -1,6 +1,6 @@
 require("dotenv").config();
-const MasterPlaylist = require("./model/MasterPlaylist");
-const MediaPlaylist = require("./model/MediaPlaylist");
+const MasterPlaylist = require("./models/MasterPlaylist");
+const MediaPlaylist = require("./models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
 

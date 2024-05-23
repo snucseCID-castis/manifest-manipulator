@@ -1,24 +1,24 @@
 const mongoose = require("mongoose");
-const Connection = require("./models/connection");
-
+const Connection = require("./models/Connection");
+const cookie = require("cookie");
 class ConnectionManager {
 	async getOrCreateConnection(req, res) {
 		const connectionId = req.cookies.connectionId;
 
-		// If there's no connection ID in the cookie, create a new connection
+		// If there's no connection ID in the cookie, create a new connection and set cookie
 		if (!connectionId) {
-			const newConnection = new Connection();
-			await newConnection.save();
-			return newConnection;
-		}
+			const connection = new Connection();
+			await connection.save();
 
-		// Set the connection ID in the response cookie
-		res.setHeader(
-			"Set-Cookie",
-			cookie.serialize("connectionId", String(newConnection._id), {
-				httpOnly: true,
-			}),
-		);
+			res.setHeader(
+				"Set-Cookie",
+				cookie.serialize("connectionId", String(connection._id), {
+					httpOnly: true,
+				}),
+			);
+
+			return connection;
+		}
 
 		// Check if a connection exists for the given connection ID
 		let connection = await Connection.findOne({ _id: connectionId });

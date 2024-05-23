@@ -1,7 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const connectionManager = require("./connectionManager");
-const playlistManager = require("./playlistManager");
+const playlistManagerFactory = require("./playlistManager");
 const app = express();
 
 // logging middleware
@@ -25,22 +25,19 @@ app.use(async (req, res, next) => {
 	next();
 });
 
-app.get("/:pathname", async (req, res) => {
-	const playlistName = req.params.pathname;
-	const playlistContent = await playlistManager.fetchPlaylist(playlistName);
-	if (!playlistContent) {
-		return res.status(404).send("Not Found");
-	}
+async function startServer() {
+	playlistManager = await playlistManagerFactory();
 
-	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	return res.send(playlistContent);
+	app.get("/:pathname", async (req, res) => {
+		const playlistName = req.params.pathname;
+		const playlistContent = await playlistManager.fetchPlaylist(playlistName);
+		if (!playlistContent) {
+			return res.status(404).send("Not Found");
+		}
 
-	// if (mediaPlaylists.has(name)) {
-	// 	cdnURL = await selectCDN();
-	// 	res.header("Content-Type", "application/vnd.apple.mpegurl");
-	// 	return res.send(reconstructMediaPlaylist(m3u8, cdnURL));
-	// }
-	// res.status(400).send("Bad Request");
-});
+		res.header("Content-Type", "application/vnd.apple.mpegurl");
+		return res.send(playlistContent);
+	});
+}
 
-module.exports = { app };
+module.exports = { app, startServer };

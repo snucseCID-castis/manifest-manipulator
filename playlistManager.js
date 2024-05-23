@@ -136,10 +136,8 @@ async function selectCDN() {
 }
 
 async function playlistManagerFactory() {
-	const [masterPlaylists, mediaPlaylists] = await Promise.all([
-		updateAndGetMasterPlaylists(),
-		updateandGetMediaPlaylists(),
-	]);
+	const masterPlaylists = await updateAndGetMasterPlaylists();
+	const mediaPlaylists = await updateandGetMediaPlaylists();
 	return new PlaylistManager(masterPlaylists, mediaPlaylists);
 }
 
@@ -160,11 +158,11 @@ class PlaylistManager {
 		if (!mediaPlaylist) {
 			return null;
 		}
-		CDNURL = await selectCDN();
+		const CDNURL = await selectCDN();
 		// TODO: fetch from selected CDN
-		contents = await fetchFromOrigin(mediaPlaylist.name);
+		const contents = await fetchFromOrigin(mediaPlaylist.name);
 		return reconstructMediaPlaylist(contents, CDNURL);
 	}
 }
 
-module.exports = playlistManagerFactory();
+module.exports = playlistManagerFactory;

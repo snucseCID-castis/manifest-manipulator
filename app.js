@@ -2,10 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
-const { parse } = require("dotenv");
+const cookieParser = require("cookie-parser");
+const ConnectionManager = require("./connectionManager");
 const app = express();
 
-const origin = "http://110.35.173.88:19090/live.stream/";
+const origin = process.env.ORIGIN_URL ||"http://110.35.173.88:19090/live.stream/";
 
 // TODO: CDN urls should be stored in DB
 const availableCDNs = [
@@ -29,6 +30,8 @@ const availableCDNs = [
 // TODO: playlists should be stored in DB
 const masterPlaylists = {};
 const mediaPlaylists = new Set();
+const connectionManager = new ConnectionManager();
+
 
 // logging middleware
 app.use((req, res, next) => {
@@ -42,6 +45,17 @@ app.use((req, res, next) => {
 	next();
 });
 
+// parse cookies
+app.use(cookieParser());
+
+
+// store connection instance in request object
+app.use(async (req, res, next) =>{
+	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);
+	next();
+});
+
+
 // fetch master/media playlist
 async function fetchPlaylist(name) {
 	let content;
@@ -49,6 +63,7 @@ async function fetchPlaylist(name) {
 	if (name in masterPlaylists) {
 		content = masterPlaylists[name];
 	} else if (mediaPlaylists.has(name)) {
+		//cdn selection here
 		content = await fetchFromOrigin(name);
 	} else {
 		content = await storeNewMaster(name);
@@ -160,7 +175,7 @@ async function selectCDN() {
 
 app.get("/:pathname", async (req, res) => {
 	const name = req.params.pathname;
-	const m3u8 = await fetchPlaylist(name);
+	const m3u8 = await fetchPlaylist(name); 
 	if (name in masterPlaylists) {
 		res.header("Content-Type", "application/vnd.apple.mpegurl");
 		return res.send(m3u8);

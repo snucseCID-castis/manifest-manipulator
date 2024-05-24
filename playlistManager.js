@@ -7,6 +7,25 @@ const m3u8Parser = require("m3u8-parser");
 const origin =
 	process.env.ORIGIN_URL || "http://110.35.173.88:19090/live.stream/";
 
+// TODO: CDN urls should be stored in DB
+const availableCDNs = [
+	// origin url, but for test
+	{
+		url: "http://110.35.173.88:19090",
+		playlist_uri: "/live.stream/",
+		traffic_uri: null,
+		detailed_traffic_uri: null,
+		type: "origin",
+	},
+	{
+		url: "http://www.castislive-cache2.com:19091",
+		playlist_uri: "/live.stream/",
+		traffic_uri: "/api/traffic",
+		detailed_traffic_uri: "/api/traffic/detail",
+		type: "cache",
+	},
+];
+
 async function updateAndGetMasterPlaylists() {
 	const masterPlaylists = await MasterPlaylist.find();
 	for (const playlist of masterPlaylists) {
@@ -128,7 +147,7 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-	async fetchPlaylist(name, cdnURL) {
+	async fetchPlaylist(name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });

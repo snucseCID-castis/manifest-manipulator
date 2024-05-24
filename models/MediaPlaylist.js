@@ -5,4 +5,4 @@ const mediaPlaylistSchema = new Schema({
 	name: { type: String, required: true, unique: true },
 });
 
-export default model("MediaPlaylist", mediaPlaylistSchema);
+module.exports = mongoose.model("MediaPlaylist", mediaPlaylistSchema);

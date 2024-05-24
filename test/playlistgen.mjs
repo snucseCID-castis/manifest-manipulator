@@ -1,7 +1,7 @@
 import { use, expect } from "chai";
 import chaiHttp from "chai-http";
 import nock from "nock";
-import { app, saveAvailableContents } from "../app.js";
+import { app } from "../app.js";
 import validateM3U8Format from "./utils/m3u8FormValidator.mjs";
 const chai = use(chaiHttp);
 
@@ -38,18 +38,14 @@ segment2.ts
 			);
 	});
 
-	before(async () => {
-		await saveAvailableContents();
-	});
-
 	after(() => {
 		nock.cleanAll();
 	});
 
-	it("Get /master.m3u8 Validation", (done) => {
+	it("Get master playlist validation", (done) => {
 		chai
 			.request(app)
-			.get("/master.m3u8")
+			.get("/ts.noll_master.m3u8")
 			.buffer()
 			.parse((res, callback) => {
 				let data = "";
@@ -75,7 +71,7 @@ segment2.ts
 		done();
 	});
 
-	it("Get /video/:pathname, /audio/:pathname validation", (done) => {
+	it("Get media playlist validation", (done) => {
 		playlistURIs.forEach((uri, index) => {
 			chai
 				.request(app)

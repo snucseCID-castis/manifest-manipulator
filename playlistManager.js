@@ -136,10 +136,10 @@ class PlaylistManager {
 		if (!mediaPlaylist) {
 			return null;
 		}
-		const CDNURL = await selectCDN();
-		// TODO: fetch from selected CDN
+		const selectedCDN = await dynamicSelector.selectCDN(connection);
+		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(mediaPlaylist.name);
-		return reconstructMediaPlaylist(contents, CDNURL);
+		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);
 	}
 }
 

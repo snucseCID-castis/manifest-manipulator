@@ -1,8 +1,10 @@
 require("dotenv").config();
+const CDN = require("./models/CDN");
 const MasterPlaylist = require("./models/MasterPlaylist");
 const MediaPlaylist = require("./models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
+const dynamicSelector = require("./dynamicSelector");
 
 const origin =
 	process.env.ORIGIN_URL || "http://110.35.173.88:19090/live.stream/";
@@ -110,12 +112,6 @@ function reconstructMediaPlaylist(m3u8, cdnURL) {
 	return playlistContent;
 }
 
-// TODO: modularize
-async function selectCDN() {
-	cdn = availableCDNs[1];
-	return cdn.url + cdn.playlist_uri;
-}
-
 async function playlistManagerFactory() {
 	const masterPlaylists = await updateAndGetMasterPlaylists();
 	const mediaPlaylists = await updateandGetMediaPlaylists();
@@ -128,7 +124,8 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-	async fetchPlaylist(name, cdnURL) {
+
+	async fetchPlaylist(connection, name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });

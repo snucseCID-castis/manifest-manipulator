@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const CDNAnalyzerFactory = require("./cdnAnalyzer");
+const dynamicSelector = require("./dynamicSelector");
 const app = express();
 
 // logging middleware
@@ -28,12 +29,16 @@ app.use(async (req, res, next) => {
 
 async function startServer() {
 	const playlistManager = await playlistManagerFactory();
-	const CDNAnalyzer = await CDNAnalyzerFactory();
+	const cdnAnalyzer = await CDNAnalyzerFactory();
 
 	app.get("/:pathname", async (req, res) => {
+		const selectedCDN = await dynamicSelector.selectCDN(
+			req.CDNConnection,
+			cdnAnalyzer.optimalCDN,
+		);
 		const playlistName = req.params.pathname;
 		const playlistContent = await playlistManager.fetchPlaylist(
-			req.CDNConnection,
+			selectedCDN,
 			playlistName,
 		);
 		if (!playlistContent) {

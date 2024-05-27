@@ -4,7 +4,6 @@ const MasterPlaylist = require("./models/MasterPlaylist");
 const MediaPlaylist = require("./models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
-const dynamicSelector = require("./dynamicSelector");
 
 const origin =
 	process.env.ORIGIN_URL || "http://110.35.173.88:19090/live.stream/";
@@ -125,7 +124,7 @@ class PlaylistManager {
 		this.mediaPlaylists = mediaPlaylists;
 	}
 
-	async fetchPlaylist(connection, name) {
+	async fetchPlaylist(selectedCDN, name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });
@@ -136,7 +135,6 @@ class PlaylistManager {
 		if (!mediaPlaylist) {
 			return null;
 		}
-		const selectedCDN = await dynamicSelector.selectCDN(connection);
 		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(mediaPlaylist.name);
 		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);

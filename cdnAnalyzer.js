@@ -56,6 +56,4 @@ async function CDNAnalyzerFactory() {
 	return cdnAnalyzer;
 }
 
-const cdnAnalyzer = CDNAnalyzerFactory();
-
-module.exports = cdnAnalyzer;
+module.exports = CDNAnalyzerFactory;

@@ -2,7 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
-const cdnAnalyzer = require("./cdnAnalyzer");
+const CDNAnalyzerFactory = require("./cdnAnalyzer");
 const app = express();
 
 // logging middleware
@@ -27,7 +27,8 @@ app.use(async (req, res, next) => {
 });
 
 async function startServer() {
-	playlistManager = await playlistManagerFactory();
+	const playlistManager = await playlistManagerFactory();
+	const CDNAnalyzer = await CDNAnalyzerFactory();
 
 	app.get("/:pathname", async (req, res) => {
 		const playlistName = req.params.pathname;

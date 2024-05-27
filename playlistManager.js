@@ -7,25 +7,6 @@ const m3u8Parser = require("m3u8-parser");
 const origin =
 	process.env.ORIGIN_URL || "http://110.35.173.88:19090/live.stream/";
 
-// TODO: CDN urls should be stored in DB
-const availableCDNs = [
-	// origin url, but for test
-	{
-		url: "http://110.35.173.88:19090",
-		playlist_uri: "/live.stream/",
-		traffic_uri: null,
-		detailed_traffic_uri: null,
-		type: "origin",
-	},
-	{
-		url: "http://www.castislive-cache2.com:19091",
-		playlist_uri: "/live.stream/",
-		traffic_uri: "/api/traffic",
-		detailed_traffic_uri: "/api/traffic/detail",
-		type: "cache",
-	},
-];
-
 async function updateAndGetMasterPlaylists() {
 	const masterPlaylists = await MasterPlaylist.find();
 	for (const playlist of masterPlaylists) {
@@ -129,12 +110,6 @@ function reconstructMediaPlaylist(m3u8, cdnURL) {
 	return playlistContent;
 }
 
-// TODO: modularize
-async function selectCDN() {
-	cdn = availableCDNs[1];
-	return cdn.url + cdn.playlist_uri;
-}
-
 async function playlistManagerFactory() {
 	const masterPlaylists = await updateAndGetMasterPlaylists();
 	const mediaPlaylists = await updateandGetMediaPlaylists();
@@ -147,7 +122,7 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-	async fetchPlaylist(name) {
+	async fetchPlaylist(name, cdnURL) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });
@@ -158,10 +133,9 @@ class PlaylistManager {
 		if (!mediaPlaylist) {
 			return null;
 		}
-		const CDNURL = await selectCDN();
 		// TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(mediaPlaylist.name);
-		return reconstructMediaPlaylist(contents, CDNURL);
+		return reconstructMediaPlaylist(contents, cdnURL);
 	}
 }
 

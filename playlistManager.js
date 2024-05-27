@@ -128,7 +128,7 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-	async fetchPlaylist(name, cdnURL) {
+	async fetchPlaylist(name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });

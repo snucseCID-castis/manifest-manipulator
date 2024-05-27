@@ -55,7 +55,7 @@ class ConnectionManager {
 		// Save the updated connection to MongoDB
 		await connection.save();
 	}
-
+  
 	async getConnectionCount() {
 		// Retrieve all live connections from MongoDB
 		const connections = await Connection.find({ expiry: { $gt: new Date() } });

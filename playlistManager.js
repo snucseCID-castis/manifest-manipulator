@@ -1,4 +1,5 @@
 require("dotenv").config();
+const CDN = require("./models/CDN");
 const MasterPlaylist = require("./models/MasterPlaylist");
 const MediaPlaylist = require("./models/MediaPlaylist");
 const axios = require("axios");
@@ -122,7 +123,8 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-	async fetchPlaylist(name, cdnURL) {
+
+	async fetchPlaylist(selectedCDN, name) {
 		//check if document with name exists in masterPlaylists or mediaPlaylists
 
 		const masterPlaylist = await MasterPlaylist.findOne({ name });
@@ -133,9 +135,9 @@ class PlaylistManager {
 		if (!mediaPlaylist) {
 			return null;
 		}
-		// TODO: fetch from selected CDN
+		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(mediaPlaylist.name);
-		return reconstructMediaPlaylist(contents, cdnURL);
+		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);
 	}
 }
 

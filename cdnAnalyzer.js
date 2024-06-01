@@ -1,13 +1,15 @@
 const CDN = require("./models/CDN");
 const axios = require("axios");
 
-async function retrieveCDNStatus(cdnURL) {
-	const selectedCDN = await CDN.findOne({ url: cdnURL });
-	if (!selectedCDN) {
-		throw new Error("CDN not found");
-	}
-	if (selectedCDN.type === "cache") {
-		const response = await axios.get(cdnURL + selectedCDN.traffic_uri);
+async function retrieveCDNStatus(cdn) {
+	if (cdn.type === "cache") {
+		const response = await axios.get(cdn.apiUrl);
+		if (response.status !== 200) {
+			// TODO: proper health check
+			return {
+				isDown: true,
+			};
+		}
 		const data = response.data;
 		return {
 			connection_count: data.currentConnectionCount,
@@ -16,7 +18,7 @@ async function retrieveCDNStatus(cdnURL) {
 		};
 	}
 	// TODO: status retrieval for cloudfront
-	if (selectedCDN.type === "cloudfront") {
+	if (cdn.type === "cloudfront") {
 		// const response = await axios.get(cdnURL + selectedCDN.traffic_uri);
 		// const data = response.data;
 		// return {
@@ -24,7 +26,7 @@ async function retrieveCDNStatus(cdnURL) {
 		//   tps: data.TPS,
 		//   bps: data.BPS,
 		// };
-		return selectedCDN.status;
+		return cdn.status;
 	}
 }
 
@@ -33,20 +35,36 @@ async function getAllCDNs() {
 }
 
 class CDNAnalyzer {
+	optimalCDN = null;
+
 	constructor(CDNs) {
 		this.availableCDNs = CDNs;
 		this.intervalID = setInterval(async () => {
 			await this.saveCDNStatus();
+			await this.updateOptimalCDN();
 		}, 2000);
 	}
 
 	async saveCDNStatus() {
 		for (const cdn of this.availableCDNs) {
-			const status = await retrieveCDNStatus(cdn.url);
+			const status = await retrieveCDNStatus(cdn);
 			cdn.status = status;
 			// console.log(cdn)
 			await cdn.save();
 		}
+	}
+
+	async updateOptimalCDN() {
+		// find the optimal CDN based on bps per connection.
+		// TODO: implement check for other criterion to eliminate outliers
+		const optimalCDN = this.availableCDNs.reduce((largest, current) => {
+			return (!current.status.isDown &&
+				current.status.bps / current.status.connection_count) >=
+				largest.status.bps / largest.status.connection_count
+				? current
+				: largest;
+		});
+		this.optimalCDN = optimalCDN;
 	}
 }
 

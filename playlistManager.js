@@ -82,9 +82,46 @@ function ensureRelativeUrl(url) {
 	}
 	return url;
 }
+function getTokenizedMasterPlaylist(content, connectionId) {
+	// Parse the original master playlist content
+	const parsedManifest = parseManifest(content);
+
+	// Iterate through each playlist in the parsed manifest
+	for (const playlist of parsedManifest.playlists) {
+		// Tokenize the URI by appending the connectionId
+		playlist.uri = `${connectionId}/${playlist.uri}`;
+	}
+
+	for (const group in parsedManifest.mediaGroups.AUDIO) {
+		for (const name in parsedManifest.mediaGroups.AUDIO[group]) {
+			parsedManifest.mediaGroups.AUDIO[group][name].uri =
+				`${connectionId}/${parsedManifest.mediaGroups.AUDIO[group][name].uri}`;
+		}
+	}
+	let playlistStr = "#EXTM3U \n";
+
+	// Append MediaGroups
+	for (const group in parsedManifest.mediaGroups.AUDIO) {
+		for (const language in parsedManifest.mediaGroups.AUDIO[group]) {
+			// Audio Group Template
+			playlistStr += `#EXT-X-MEDIA:TYPE=AUDIO,URI="${parsedManifest.mediaGroups.AUDIO[group][language].uri}",GROUP-ID="${group}",NAME="${language}",CHANNELS="1"\n`;
+		}
+	}
+
+	// Append playlists
+	for (const playlist of parsedManifest.playlists) {
+		// Resolution String
+		const resolutionStr = `${playlist.attributes.RESOLUTION.width}x${playlist.attributes.RESOLUTION.height}`;
+		// Stream-inf line template
+		playlistStr += `#EXT-X-STREAM-INF:BANDWIDTH=${playlist.attributes.BANDWIDTH},CODECS="${playlist.attributes.CODECS}",RESOLUTION=${resolutionStr},AUDIO="${playlist.attributes.AUDIO}"\n`;
+		// Add uri
+		playlistStr += `${playlist.uri}\n`;
+	}
+	return playlistStr;
+}
 
 function reconstructMediaPlaylist(m3u8, cdnURL) {
-	manifest = parseManifest(m3u8);
+	const manifest = parseManifest(m3u8);
 	let playlistContent = "#EXTM3U\n";
 
 	// TODO: can we add all the attributes automatically?
@@ -123,14 +160,11 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-
-	async fetchPlaylist(selectedCDN, name) {
-		//check if document with name exists in masterPlaylists or mediaPlaylists
-
-		const masterPlaylist = await MasterPlaylist.findOne({ name });
-		if (masterPlaylist) {
-			return masterPlaylist.contents;
-		}
+	async fetchMasterPlaylist(connectionId, name) {
+		const playlist = await MasterPlaylist.findOne({ name });
+		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
+	}
+	async fetchMediaPlaylist(selectedCDN, name) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {
 			return null;

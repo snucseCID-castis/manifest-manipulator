@@ -9,9 +9,11 @@ class ConnectionManager {
 	async getConnection(connectionId) {
 		let connection = await Connection.findOne({ _id: connectionId });
 		if (!connection) {
-			connection = new Connection();
+			connection = new Connection({
+				_id: connectionId,
+			});
 			await connection.save();
-			return;
+			return connection;
 		}
 		await this.refreshConnection(connection);
 		return connection;

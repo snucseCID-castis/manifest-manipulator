@@ -1,4 +1,5 @@
 const Connection = require("./models/Connection");
+const MediaPlaylist = require("./models/MediaPlaylist");
 
 class ConnectionManager {
 	async createConnection() {
@@ -13,15 +14,27 @@ class ConnectionManager {
 				_id: connectionId,
 			});
 			await connection.save();
-			return connection;
+		} else {
+			await this.refreshConnection(connection);
 		}
-		await this.refreshConnection(connection);
 		return connection;
 	}
 
 	async refreshConnection(connection) {
 		connection.expiry = new Date(Date.now() + 10000);
 		// Save the updated connection to MongoDB
+		await connection.save();
+	}
+
+	async logConnectionRequest(connection, mediaPlaylistName, time) {
+		console.log("playlist name", mediaPlaylistName, time);
+		const mediaPlaylist = await MediaPlaylist.findOne({
+			name: mediaPlaylistName,
+		});
+		connection.requestLogs.push({
+			mediaPlaylist: mediaPlaylist._id,
+			time,
+		});
 		await connection.save();
 	}
 

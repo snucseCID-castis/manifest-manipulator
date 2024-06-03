@@ -45,6 +45,7 @@ async function startServer() {
 	});
 
 	app.get("/:connectionId/:mediaPlaylist", async (req, res) => {
+		const currentTime = Date.now();
 		const connection = await connectionManager.getConnection(
 			req.params.connectionId,
 		);
@@ -62,7 +63,11 @@ async function startServer() {
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}
-
+		await connectionManager.logConnectionRequest(
+			connection,
+			req.params.mediaPlaylist,
+			currentTime,
+		);
 		res.header("Content-Type", "application/vnd.apple.mpegurl");
 		return res.send(playlistContent);
 	});

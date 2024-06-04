@@ -2,11 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const requestLogSchema = new Schema({
-	mediaPlaylist: {
-		type: Schema.Types.ObjectId,
-		ref: "MediaPlaylist",
-		required: true,
-	},
+	mediaPlaylistName: { type: String, required: true },
 	time: { type: Date, default: Date.now },
 });
 

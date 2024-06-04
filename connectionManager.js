@@ -27,12 +27,8 @@ class ConnectionManager {
 	}
 
 	async logConnectionRequest(connection, mediaPlaylistName, time) {
-		console.log("playlist name", mediaPlaylistName, time);
-		const mediaPlaylist = await MediaPlaylist.findOne({
-			name: mediaPlaylistName,
-		});
 		connection.requestLogs.push({
-			mediaPlaylist: mediaPlaylist._id,
+			mediaPlaylistName,
 			time,
 		});
 		await connection.save();

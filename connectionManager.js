@@ -1,46 +1,25 @@
 const Connection = require("./models/Connection");
-const cookie = require("cookie");
 
 class ConnectionManager {
-	async getOrCreateConnection(req, res) {
-		const connectionId = req.cookies.connectionId;
-
-		// If there's no connection ID in the cookie, create a new connection and set cookie
-		if (!connectionId) {
-			const connection = new Connection();
+	async createConnection() {
+		const connection = new Connection();
+		await connection.save();
+		return connection;
+	}
+	async getConnection(connectionId) {
+		let connection = await Connection.findOne({ _id: connectionId });
+		if (!connection) {
+			connection = new Connection({
+				_id: connectionId,
+			});
 			await connection.save();
-
-			res.setHeader(
-				"Set-Cookie",
-				cookie.serialize("connectionId", String(connection._id), {
-					httpOnly: true,
-				}),
-			);
-
 			return connection;
 		}
-
-		// Check if a connection exists for the given connection ID
-		let connection = await Connection.findOne({ _id: connectionId });
-
-		// If connection doesn't exist, create a new one
-		if (!connection) {
-			// Create a new connection with the provided connection ID
-			connection = new Connection({ _id: connectionId });
-			// Save the new connection to MongoDB
-			await connection.save();
-		} else {
-			// If connection exists, update its expiry to 10 seconds from now
-			await this.refreshConnection(connectionId);
-		}
-
+		await this.refreshConnection(connection);
 		return connection;
 	}
 
-	async refreshConnection(connectionId) {
-		// Find the connection based on the connection ID
-		const connection = await Connection.findOne({ _id: connectionId });
-		// Update the expiry time to 10 seconds from now
+	async refreshConnection(connection) {
 		connection.expiry = new Date(Date.now() + 10000);
 		// Save the updated connection to MongoDB
 		await connection.save();
@@ -54,7 +33,7 @@ class ConnectionManager {
 		// Save the updated connection to MongoDB
 		await connection.save();
 	}
-  
+
 	async getConnectionCount() {
 		// Retrieve all live connections from MongoDB
 		const connections = await Connection.find({ expiry: { $gt: new Date() } });

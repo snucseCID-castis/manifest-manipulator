@@ -106,7 +106,7 @@ class CDNAnalyzer {
 				continue;
 			}
 
-			// if unit is CDN, use connection count of CDN: case 6, 7
+			// if unit is CDN, use connection count of CDN: case 4, 5
 			if (unit === "CDN") {
 				if (CDN.status.connection_count === 0) {
 					optimalCDN = CDN;
@@ -122,7 +122,7 @@ class CDNAnalyzer {
 				continue;
 			}
 
-			// if unit is MM, should calculate connection count of MM: case 4, 5
+			// if unit is MM, should calculate connection count of MM: case 6, 7
 			const currentTime = new Date();
 			const currentConnections = await Connection.find({
 				cdn: CDN._id,

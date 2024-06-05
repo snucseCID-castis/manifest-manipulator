@@ -73,9 +73,7 @@ class CDNAnalyzer {
 	}
 
 	async updateOptimalCDN(criterion) {
-		// find the optimal CDN based on bps per connection.
-		// TODO: implement check for other criterion to eliminate outliers
-
+		// find the optimal CDN based on criterion
 		if (!criterion) {
 			return;
 		}
@@ -87,21 +85,24 @@ class CDNAnalyzer {
 			: criterion.includes("per")
 				? "CDN"
 				: null;
-		const metricOfMM = criterion.includes("mm_");
+		const metricOfMM = criterion.includes("_mm_");
 
 		// determine the optimal CDN based on the criterion
-		let optimalCDN = this.availableCDNs[0];
-		let mmConnectionCountOfOptimalCDN = 0;
+		let optimalCDN = null;
+		let optimalCDNPoint = 0;
 		for (const CDN of this.availableCDNs) {
 			if (CDN.status.isDown) {
 				continue;
 			}
 
-			// if unit is null, only use metric of CDN: case 1, 2, 3
 			// TODO: weighting when CDN is almost full (user's delay is too high)
+			// if unit is null, only use metric of CDN: case 1, 2, 3
 			if (!unit) {
-				optimalCDN =
-					CDN.status[metric] < optimalCDN.status[metric] ? CDN : optimalCDN;
+				const point = -1 * CDN.status[metric];
+				if (!optimalCDN || point > optimalCDNPoint) {
+					optimalCDN = CDN;
+					optimalCDNPoint = point;
+				}
 				continue;
 			}
 
@@ -109,14 +110,36 @@ class CDNAnalyzer {
 			if (unit === "CDN") {
 				if (CDN.status.connection_count === 0) {
 					optimalCDN = CDN;
+					optimalCDNPoint = Number.Infinity;
 					continue;
 				}
-				optimalCDN =
-					CDN.status[metric] / CDN.status.connection_count >
-					optimalCDN.status[metric] / optimalCDN.status.connection_count
-						? CDN
-						: optimalCDN;
+
+				const point = CDN.status[metric] / CDN.status.connection_count;
+				if (!optimalCDN || point > optimalCDNPoint) {
+					optimalCDN = CDN;
+					optimalCDNPoint = point;
+				}
 				continue;
+			}
+
+			// if unit is MM, should calculate connection count of MM: case 4, 5
+			const currentTime = new Date();
+			const currentConnections = await Connection.find({
+				cdn: CDN._id,
+				expiry: { $gt: currentTime },
+			});
+			const mmConnectionCount = currentConnections.length;
+
+			if (mmConnectionCount === 0) {
+				optimalCDN = CDN;
+				optimalCDNPoint = Number.Infinity;
+				continue;
+			}
+
+			const point = CDN.status[metric] / mmConnectionCount;
+			if (!optimalCDN || point > optimalCDNPoint) {
+				optimalCDN = CDN;
+				optimalCDNPoint = point;
 			}
 		}
 

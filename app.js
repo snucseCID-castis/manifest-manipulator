@@ -61,7 +61,7 @@ async function startServer() {
 		);
 		await connectionManager.updateCDN(connection, selectedCDN?._id);
 		const playlistContent = await playlistManager.fetchMediaPlaylist(
-			selectedCDN,
+			connection.cdn,
 			req.params.mediaPlaylist,
 		);
 		if (!playlistContent) {

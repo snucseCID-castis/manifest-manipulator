@@ -2,7 +2,7 @@ const Connection = require("./models/Connection");
 const MediaPlaylist = require("./models/MediaPlaylist");
 
 class ConnectionManager {
-	delayThreshold = 4000; // 4 seconds
+	delayThreshold = 5000;
 
 	async createConnection() {
 		const connection = new Connection();
@@ -68,21 +68,16 @@ class ConnectionManager {
 		}
 		return connectionCount;
 	}
-	async updateCDNOnDelay(connection, currentTime, cdnAnalyzer) {
+	async checkIfDelayed(connection, currentTime) {
 		//TODO: check audio, video track each (by media playlist name)
 		if (
 			connection.requestLogs[connection.requestLogs.length - 1].time +
 				delayThreshold <
 			currentTime
 		) {
-			//todo: select optimal cdn except the current one
-			console.log("request delayed");
-			connection.cdn = dynamicSelector.selectCDN(
-				connection,
-				cdnAnalyzer.optimalCDN,
-			);
-			await connection.save();
+			return true;
 		}
+		return false;
 	}
 }
 

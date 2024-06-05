@@ -12,6 +12,6 @@ const connectionSchema = new Schema({
 	requestLogs: { type: [requestLogSchema], default: [] },
 });
 
-connectionSchema.index({ expiry: 1 }, { expireAfterSeconds: 300 });
+connectionSchema.index({ expiry: 1 }, { expireAfterSeconds: 60 });
 
 module.exports = mongoose.model("Connection", connectionSchema);

@@ -20,6 +20,14 @@ class ConnectionManager {
 		return connection;
 	}
 
+	async updateCDN(connection, cdnId) {
+		if (!cdnId) {
+			return;
+		}
+		connection.cdn = cdnId;
+		await connection.save();
+	}
+
 	async refreshConnection(connection) {
 		connection.expiry = new Date(Date.now() + 10000);
 		// Save the updated connection to MongoDB

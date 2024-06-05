@@ -1,13 +1,9 @@
 const express = require("express");
 const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
-<<<<<<< HEAD
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
 const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
-=======
-const CDNAnalyzerFactory = require("./cdnAnalyzer");
->>>>>>> 350293a (feat: update cdn on delay)
 const app = express();
 
 // logging middleware

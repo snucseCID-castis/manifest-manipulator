@@ -1,8 +1,9 @@
 const express = require("express");
 const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
-const CDNAnalyzerFactory = require("./cdnAnalyzer");
+const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
+const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
 const app = express();
 
 // logging middleware
@@ -28,7 +29,9 @@ app.use((req, res, next) => {
 
 async function startServer() {
 	const playlistManager = await playlistManagerFactory();
-	const cdnAnalyzer = await CDNAnalyzerFactory();
+	const cdnAnalyzer = await CDNAnalyzerFactory(
+		optimalCDNCriteria.BPSperConnCntMM,
+	);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();

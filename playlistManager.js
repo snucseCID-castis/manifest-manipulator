@@ -171,6 +171,9 @@ class PlaylistManager {
 		}
 		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(mediaPlaylist.name);
+		if (!selectedCDN) {
+			return contents;
+		}
 		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);
 	}
 }

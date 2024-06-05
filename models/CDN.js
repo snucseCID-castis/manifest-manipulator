@@ -7,10 +7,17 @@ const cdnSchema = new Schema({
 	type: { type: String, required: true, enum: ["cache", "cloudfront"] },
 	status: {
 		isDown: { type: Boolean, default: false },
-		connection_count: { type: Number, default: 0 },
-		tps: { type: Number, default: 0 },
 		bps: { type: Number, default: 0 },
+		tps: { type: Number, default: 0 },
+		connection_count: { type: Number, default: 0 }
 	},
+	lastStatus: {
+		bps: { type: Number, default: 0 },
+		tps: { type: Number, default: 0 },
+		connection_count: { type: Number, default: 0 },
+		mm_connection_count: { type: Number, default: 0 },
+		metric_for_mm: { type: Number, default: 0 }
+	}
 });
 
 module.exports = mongoose.model("CDN", cdnSchema, "CDN");

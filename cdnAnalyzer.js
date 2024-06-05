@@ -85,7 +85,7 @@ class CDNAnalyzer {
 			: criterion.includes("per")
 				? "CDN"
 				: null;
-		const metricOfMM = criterion.includes("_mm_");
+		const metricForMM = criterion.includes("_mm_");
 
 		// determine the optimal CDN based on the criterion
 		let optimalCDN = null;
@@ -136,11 +136,48 @@ class CDNAnalyzer {
 				continue;
 			}
 
-			const point = CDN.status[metric] / mmConnectionCount;
+			let currentMetric = CDN.status[metric];
+			// if metric is for MM, calculate the metric of MM: case 8, 9
+			if (metricForMM) {
+				const currentLoadCount =
+					CDN.status.connection_count - mmConnectionCount;
+				const lastMMCount = CDN.lastStatus.mm_connection_count;
+				const lastLoadCount = CDN.lastStatus.connection_count - lastMMCount;
+
+				// [ currentMetric      [  mmConnectionCount, currentLoadCount         [  metricForMM(currentMetric)
+				//	  lastMetric  ]  =      lastMMCount,     lastLoadCount    ]    @     metricForLoad ]
+				const det =
+					mmConnectionCount * lastLoadCount - currentLoadCount * lastMMCount;
+				const lastMetric = CDN.lastStatus[metric];
+				
+				if (det !== 0) {
+					currentMetric =
+						(currentMetric * lastLoadCount - lastMetric * lastMMCount) / det; // metric for MM
+				} else {
+					// if det = 0, connection counts for MM and load are the same / or load is zero.
+					// assume that the metric for load is the same as before,
+					// so the change of metric is the change of metric for MM.
+					const metricDiff = currentMetric - lastMetric;
+					currentMetric = CDN.lastStatus.metric_for_mm + metricDiff;
+				}
+			}
+
+			const point = currentMetric / mmConnectionCount;
+			// console.log(optimalCDN);
+			// console.log(CDN);
+			// console.log(currentMetric, mmConnectionCount, point);
 			if (!optimalCDN || point > optimalCDNPoint) {
 				optimalCDN = CDN;
 				optimalCDNPoint = point;
 			}
+			CDN.lastStatus = {
+				bps: CDN.status.bps,
+				tps: CDN.status.tps,
+				connection_count: CDN.status.connection_count,
+				mm_connection_count: mmConnectionCount,
+				metric_for_mm: currentMetric,
+			};
+			await CDN.save();
 		}
 
 		this.optimalCDN = optimalCDN;
@@ -149,6 +186,22 @@ class CDNAnalyzer {
 
 async function CDNAnalyzerFactory(criterion) {
 	const CDNs = await getAllCDNs();
+	for (const CDN of CDNs) {
+		CDN.status = {
+			isDown: false,
+			bps: 0,
+			tps: 0,
+			connection_count: 0,
+		};
+		CDN.lastStatus = {
+			bps: 0,
+			tps: 0,
+			connection_count: 0,
+			mm_connection_count: 0,
+			metric_for_mm: 0,
+		};
+		await CDN.save();
+	}
 	const cdnAnalyzer = new CDNAnalyzer(CDNs, criterion);
 	return cdnAnalyzer;
 }

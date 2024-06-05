@@ -149,7 +149,7 @@ class CDNAnalyzer {
 				const det =
 					mmConnectionCount * lastLoadCount - currentLoadCount * lastMMCount;
 				const lastMetric = CDN.lastStatus[metric];
-				
+
 				if (det !== 0) {
 					currentMetric =
 						(currentMetric * lastLoadCount - lastMetric * lastMMCount) / det; // metric for MM
@@ -157,8 +157,11 @@ class CDNAnalyzer {
 					// if det = 0, connection counts for MM and load are the same / or load is zero.
 					// Assume that the change of metric is evenly distributed to MM and load.
 					const metricDiff = currentMetric - lastMetric;
-					const metricDiffPerConn = metricDiff / (mmConnectionCount + currentLoadCount);
-					currentMetric = CDN.lastStatus.metric_for_mm + metricDiffPerConn * mmConnectionCount;
+					const metricDiffPerConn =
+						metricDiff / (mmConnectionCount + currentLoadCount);
+					currentMetric =
+						CDN.lastStatus.metric_for_mm +
+						metricDiffPerConn * mmConnectionCount;
 				}
 			}
 

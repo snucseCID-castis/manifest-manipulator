@@ -1,9 +1,13 @@
 const express = require("express");
 const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
+<<<<<<< HEAD
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
 const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
+=======
+const CDNAnalyzerFactory = require("./cdnAnalyzer");
+>>>>>>> 350293a (feat: update cdn on delay)
 const app = express();
 
 // logging middleware
@@ -52,6 +56,7 @@ async function startServer() {
 		const connection = await connectionManager.getConnection(
 			req.params.connectionId,
 		);
+
 		if (!connection) {
 			return res.status(404).send("Not Found");
 		}
@@ -67,11 +72,13 @@ async function startServer() {
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}
+
 		await connectionManager.logConnectionRequest(
 			connection,
 			req.params.mediaPlaylist,
 			currentTime,
 		);
+
 		res.header("Content-Type", "application/vnd.apple.mpegurl");
 		return res.send(playlistContent);
 	});

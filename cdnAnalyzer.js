@@ -111,7 +111,7 @@ class CDNAnalyzer {
 				if (CDN.status.connection_count === 0) {
 					optimalCDN = CDN;
 					optimalCDNPoint = Number.Infinity;
-					continue;
+					break;
 				}
 
 				const point = CDN.status[metric] / CDN.status.connection_count;
@@ -133,7 +133,7 @@ class CDNAnalyzer {
 			if (mmConnectionCount === 0) {
 				optimalCDN = CDN;
 				optimalCDNPoint = Number.Infinity;
-				continue;
+				break;
 			}
 
 			let currentMetric = CDN.status[metric];

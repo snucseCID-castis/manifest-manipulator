@@ -86,7 +86,7 @@ class CDNAnalyzer {
 		}
 		if (newlyDownCDNs.length !== 0) {
 			const connections = await Connection.find({
-				cdn: { $in: newlyDownCDNs },
+				cdn: { $in: newlyDownCDNs.map((cdn) => cdn._id) },
 			});
 			const minimumCost = Math.min(
 				...this.availableCDNs

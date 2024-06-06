@@ -71,18 +71,18 @@ class ConnectionManager {
 		}
 		return connectionCount;
 	}
-	async checkIfDelayed(connection, currentTime, mediaPlaylistName) {
+	async blacklistFromDelay(connection, currentTime, mediaPlaylistName) {
 		const relatedLogs = connection.requestLogs.get(mediaPlaylistName);
 		if (relatedLogs.length === 0) {
-			return false;
+			return [];
 		}
 		if (
 			currentTime - relatedLogs[relatedLogs.length - 1] >
 			this.delayThreshold
 		) {
-			return true;
+			return [connection.cdn];
 		}
-		return false;
+		return [];
 	}
 }
 

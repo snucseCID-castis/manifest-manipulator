@@ -59,8 +59,8 @@ async function startServer() {
 		// TODO: should import proper availableCDNs
 		const selectedCDN = await dynamicSelector.selectCDN(
 			connection,
-			cdnAnalyzer.availableCDNs,
-			connectionManager.checkIfDelayed(
+			availableCDNs,
+			connectionManager.blacklistFromDelay(
 				connection,
 				currentTime,
 				req.params.mediaPlaylist,

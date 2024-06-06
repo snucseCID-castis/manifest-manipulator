@@ -71,8 +71,8 @@ class ConnectionManager {
 	async checkIfDelayed(connection, currentTime) {
 		//TODO: check audio, video track each (by media playlist name)
 		if (
-			connection.requestLogs[connection.requestLogs.length - 1].time +
-				delayThreshold <
+			connection.requestLogs[connection.requestLogs.length - 1]?.time +
+				this.delayThreshold <
 			currentTime
 		) {
 			return true;

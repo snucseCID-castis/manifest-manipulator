@@ -59,7 +59,7 @@ async function startServer() {
 		// TODO: should import proper availableCDNs
 		const selectedCDN = await dynamicSelector.selectCDN(
 			connection,
-			availableCDNs,
+			cdnAnalyzer.availableCDNs,
 			connectionManager.blacklistFromDelay(
 				connection,
 				currentTime,

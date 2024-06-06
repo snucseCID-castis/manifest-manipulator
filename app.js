@@ -60,7 +60,11 @@ async function startServer() {
 		const selectedCDN = await dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			connectionManager.checkIfDelayed(connection, currentTime),
+			connectionManager.checkIfDelayed(
+				connection,
+				currentTime,
+				req.params.mediaPlaylist,
+			),
 		);
 
 		await connectionManager.updateCDN(connection, selectedCDN?._id);

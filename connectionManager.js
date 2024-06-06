@@ -71,12 +71,14 @@ class ConnectionManager {
 		}
 		return connectionCount;
 	}
-	async checkIfDelayed(connection, currentTime) {
-		//TODO: check audio, video track each (by media playlist name)
+	async checkIfDelayed(connection, currentTime, mediaPlaylistName) {
+		const relatedLogs = connection.requestLogs.get(mediaPlaylistName);
+		if (relatedLogs.length === 0) {
+			return false;
+		}
 		if (
-			connection.requestLogs[connection.requestLogs.length - 1]?.time +
-				this.delayThreshold <
-			currentTime
+			currentTime - relatedLogs[relatedLogs.length - 1] >
+			this.delayThreshold
 		) {
 			return true;
 		}

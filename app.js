@@ -1,5 +1,5 @@
 const express = require("express");
-const connectionManager = require("./connectionManager");
+const ConnectionManagerFactory = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
@@ -31,7 +31,9 @@ async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
 		optimalCDNCriteria.BPSMMperConnCntMM,
+		0.9,
 	);
+	const connectionManager = ConnectionManagerFactory(5000);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();

@@ -11,6 +11,7 @@ class ConnectionManager {
 		await connection.save();
 		return connection;
 	}
+
 	async getConnection(connectionId) {
 		let connection = await Connection.findOne({ _id: connectionId });
 		if (!connection) {
@@ -28,35 +29,54 @@ class ConnectionManager {
 		if (!cdnId) {
 			return;
 		}
-		connection.cdn = cdnId;
-		await connection.save();
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{ $set: { cdn: cdnId } },
+			{ new: true, useFindAndModify: false },
+		);
 	}
 
 	async refreshConnection(connection) {
-		connection.expiry = new Date(Date.now() + 10000);
+		const newExpiry = new Date(Date.now() + 10000);
 		// Save the updated connection to MongoDB
-		await connection.save();
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{ $set: { expiry: newExpiry } },
+			{ new: true, useFindAndModify: false },
+		);
 	}
 
 	async logConnectionRequest(connection, mediaPlaylistName, time) {
 		const logKey = mediaPlaylistName.split(".")[0];
-		if (connection.requestLogs.has(logKey)) {
-			const requestTimes = connection.requestLogs.get(logKey);
-			requestTimes.push(time);
-			connection.requestLogs.set(logKey, requestTimes);
-		} else {
-			connection.requestLogs.set(logKey, [time]);
-		}
-		await connection.save();
+		const update = {};
+		const updatePath = `requestLogs.${logKey}`;
+
+		// 현재 로그가 있는 경우에는 배열에 새로운 시간을 추가하고, 없는 경우에는 새로운 배열을 생성
+		update[updatePath] = { $each: [time], $slice: -10 };
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{ $push: update },
+			{ new: true, useFindAndModify: false },
+		);
+		// if (connection.requestLogs.has(logKey)) {
+		// 	const requestTimes = connection.requestLogs.get(logKey);
+		// 	requestTimes.push(time);
+		// 	connection.requestLogs.set(logKey, requestTimes);
+		// } else {
+		// 	connection.requestLogs.set(logKey, [time]);
+		// }
+		// await connection.save();
 	}
 
 	async setConnectionCDN(connectionId, cdnId) {
-		// Find the connection based on the connection ID
-		const connection = await Connection.findOne({ _id: connectionId });
-		// Set the CDN for the connection
-		connection.cdn = cdnId;
-		// Save the updated connection to MongoDB
-		await connection.save();
+		await Connection.findOneAndUpdate(
+			{ _id: connectionId },
+			{ $set: { cdn: cdnId } },
+			{ new: true, useFindAndModify: false },
+		);
 	}
 
 	async getConnectionCount() {

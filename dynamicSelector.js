@@ -11,6 +11,18 @@ class DynamicSelector {
 
 		return connection.CDN;
 	}
+	async distributeConnections(connections, availableCDNs, cost) {
+		const targetCDNs = availableCDNs.filter(
+			(cdn) => cdn.cost != null && cdn.cost <= cost,
+		);
+		const groupSize = Math.ceil(connections.length / targetCDNs.length);
+		for (let i = 0; i < targetCDNs.length; i++) {
+			for (let j = 0; j < groupSize; j++) {
+				connections[i * groupSize + j].CDN = targetCDNs[i];
+				connections[i * groupSize + j].save();
+			}
+		}
+	}
 }
 
 module.exports = new DynamicSelector();

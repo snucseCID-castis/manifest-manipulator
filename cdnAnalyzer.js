@@ -164,7 +164,10 @@ class CDNAnalyzer {
 		let currentMetric = CDN.status[metric];
 		// if metric is for MM, calculate the metric of MM: case 8, 9
 		if (metricForMM) {
-			const currentLoadCount = CDN.status.connection_count - mmConnectionCount;
+			let currentLoadCount = CDN.status.connection_count - mmConnectionCount;
+			if (currentLoadCount < 0) {
+				currentLoadCount = 0;
+			}
 			const lastMMCount = CDN.lastStatus.mm_connection_count;
 			const lastLoadCount = CDN.lastStatus.connection_count - lastMMCount;
 
@@ -187,7 +190,6 @@ class CDNAnalyzer {
 					CDN.lastStatus.metric_for_mm + metricDiffPerConn * mmConnectionCount;
 			}
 		}
-
 		CDN.lastStatus = {
 			bps: CDN.status.bps,
 			tps: CDN.status.tps,
@@ -196,7 +198,6 @@ class CDNAnalyzer {
 			metric_for_mm: currentMetric,
 		};
 		await CDN.save();
-
 		return currentMetric / mmConnectionCount;
 	}
 
@@ -222,7 +223,6 @@ class CDNAnalyzer {
 		this.optimalCDN = this.availableCDNs[0];
 	}
 	async handleCostExceedance() {
-		//console.log("###########################################");
 		try {
 			const now = new Date();
 			const connectionCounts = await Connection.aggregate([
@@ -233,7 +233,6 @@ class CDNAnalyzer {
 			for (const item of connectionCounts) {
 				connectionCountMap[item._id] = item.count;
 			}
-			//console.log("CountMap:", connectionCountMap);
 			let totalCost = 0;
 			let totalConnections = 0;
 			for (const cdn of this.availableCDNs) {
@@ -241,20 +240,16 @@ class CDNAnalyzer {
 				totalCost += cdn.cost * count;
 				totalConnections += count;
 			}
-			//console.log("Cost, Connections:", totalCost, totalConnections);
 			const minimumCost = Math.min(
 				...this.availableCDNs
 					.filter((cdn) => cdn.status.isDown !== true)
 					.map((cdn) => cdn.cost),
 			);
-			//console.log("##################################");
-			//console.log(totalConnections, totalCost, minimumCost, this.targetCost);
 			if (
 				totalConnections &&
 				totalCost / totalConnections >
 					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio
 			) {
-				//console.log("Exceedance detected");
 				if (minimumCost < this.targetCost) {
 					this.dynamicSelector.changeCostLimit(
 						minimumCost + (this.targetCost - minimumCost) * this.setRatio,

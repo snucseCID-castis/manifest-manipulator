@@ -1,5 +1,5 @@
 const express = require("express");
-const ConnectionManager = require("./connectionManager");
+const connectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
@@ -28,6 +28,7 @@ const app = express();
 // });
 
 async function startServer() {
+	// initialize Delay collection
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
 		optimalCDNCriteria.BPSMMperConnCntMM,
@@ -36,7 +37,6 @@ async function startServer() {
 		0.9, //exceed check
 		0.5, //setting point
 	);
-	const connectionManager = new ConnectionManager(5000);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();

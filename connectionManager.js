@@ -1,9 +1,10 @@
 const Connection = require("./models/Connection");
-const MediaPlaylist = require("./models/MediaPlaylist");
+const Delay = require("./models/Delay");
 
 class ConnectionManager {
 	constructor(delayThreshold) {
 		this.delayThreshold = delayThreshold;
+		this.delayLogs = [];
 	}
 
 	async createConnection() {
@@ -99,16 +100,28 @@ class ConnectionManager {
 		const logKey = mediaPlaylistName.split(".")[0];
 		if (connection.requestLogs.has(logKey)) {
 			const relatedLogs = connection.requestLogs.get(logKey);
-			//console.log(currentTime - relatedLogs[relatedLogs.length - 1]);
 			if (
 				currentTime - relatedLogs[relatedLogs.length - 1] >
 				this.delayThreshold
 			) {
+				const delay = new Delay({
+					cdn: connection.cdn,
+					connection: connection._id,
+					time: currentTime,
+				});
+				this.delayLogs.push(delay);
 				return [connection.cdn];
 			}
 		}
 		return [];
 	}
+
+	async saveDelayLogs() {
+		await Delay.insertMany(this.delayLogs);
+		this.delayLogs = [];
+	}
 }
 
-module.exports = ConnectionManager;
+const connectionManager = new ConnectionManager(5000);
+
+module.exports = connectionManager;

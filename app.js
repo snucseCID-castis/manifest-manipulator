@@ -52,21 +52,24 @@ async function startServer() {
 		const connection = await connectionManager.getConnection(
 			req.params.connectionId,
 		);
-
 		if (!connection) {
 			return res.status(404).send("Not Found");
 		}
+
 		// TODO: should import proper availableCDNs
 		const selectedCDN = await dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
 			connectionManager.checkIfDelayed(connection, currentTime),
 		);
+
 		await connectionManager.updateCDN(connection, selectedCDN?._id);
+
 		const playlistContent = await playlistManager.fetchMediaPlaylist(
 			selectedCDN,
 			req.params.mediaPlaylist,
 		);
+
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}

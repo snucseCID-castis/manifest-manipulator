@@ -37,10 +37,13 @@ class ConnectionManager {
 	}
 
 	async logConnectionRequest(connection, mediaPlaylistName, time) {
-		connection.requestLogs.push({
-			mediaPlaylistName,
-			time,
-		});
+		if (connection.requestLogs.has(mediaPlaylistName)) {
+			const requestTimes = connection.requestLogs.get(mediaPlaylistName);
+			requestTimes.push(time);
+			connection.requestLogs.set(mediaPlaylistName, requestTimes);
+		} else {
+			connection.requestLogs.set(mediaPlaylistName, [time]);
+		}
 		await connection.save();
 	}
 

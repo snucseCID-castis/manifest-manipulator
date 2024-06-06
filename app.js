@@ -31,7 +31,10 @@ async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
 		optimalCDNCriteria.BPSMMperConnCntMM,
-		0.9,
+		0.8, //targetCost
+		dynamicSelector,
+		0.9, //exceed check
+		0.5, //setting point
 	);
 	const connectionManager = new ConnectionManager(5000);
 

@@ -67,17 +67,45 @@ class CDNAnalyzer {
 		this.triggerRatio = triggerRatio; // threshold of checking cost exceedance
 		this.setRatio = setRatio; // setting point of cost when the cost exceedance
 		this.intervalID = setInterval(async () => {
-			await this.saveCDNStatus();
+			await this.saveCDNStatus(this.dynamicSelector);
 			await this.updateOptimalCDN(this.criterion);
 			await this.handleCostExceedance();
 		}, 1000);
 	}
 
-	async saveCDNStatus() {
+	async saveCDNStatus(dynamicSelector) {
+		const newlyDownCDNs = [];
 		for (const cdn of this.availableCDNs) {
+			const wasDown = cdn.status.isDown;
 			const status = await retrieveCDNStatus(cdn);
+			if (!wasDown && status.isDown) {
+				newlyDownCDNs.push(cdn);
+			}
 			cdn.status = status;
 			await cdn.save();
+		}
+		if (newlyDownCDNs.length !== 0) {
+			const connections = await Connection.find({
+				cdn: { $in: newlyDownCDNs.map((cdn) => cdn._id) },
+			});
+			const minimumCost = Math.min(
+				...this.availableCDNs
+					.filter((cdn) => cdn.status.isDown !== true)
+					.map((cdn) => cdn.cost),
+			);
+			if (minimumCost >= this.targetCost) {
+				dynamicSelector.distributeConnections(
+					connections,
+					this.availableCDNs,
+					minimumCost,
+				);
+			} else {
+				dynamicSelector.distributeConnections(
+					connections,
+					this.availableCDNs,
+					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio,
+				);
+			}
 		}
 	}
 

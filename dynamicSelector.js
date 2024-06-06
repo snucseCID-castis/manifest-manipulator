@@ -3,7 +3,7 @@ const Connection = require("./models/Connection");
 const connectionManager = require("./connectionManager");
 
 class DynamicSelector {
-	async selectCDN(connection, availableCDNs, isDelayed) {
+	async selectCDN(connection, availableCDNs, blacklist) {
 		if (!connection.CDN || connection.CDN.status.isDown) {
 			return availableCDNs[0];
 		}

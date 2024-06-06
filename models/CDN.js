@@ -1,4 +1,3 @@
-const { Double } = require("mongodb");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -6,7 +5,7 @@ const cdnSchema = new Schema({
 	apiUrl: { type: String, unique: true },
 	sourceBaseUrl: { type: String, required: true },
 	type: { type: String, required: true, enum: ["cache", "cloudfront"] },
-	cost: { type: Double },
+	cost: { type: Number },
 	status: {
 		isDown: { type: Boolean, default: false },
 		bps: { type: Number, default: 0 },

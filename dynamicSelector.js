@@ -3,6 +3,12 @@ const Connection = require("./models/Connection");
 const connectionManager = require("./connectionManager");
 
 class DynamicSelector {
+	costLimit = null;
+
+	changeCostLimit(costLimit) {
+		this.costLimit = costLimit;
+	}
+
 	async selectCDN(connection, availableCDNs, blacklist) {
 		let selectedCDN = null;
 		for (const CDN of availableCDNs) {

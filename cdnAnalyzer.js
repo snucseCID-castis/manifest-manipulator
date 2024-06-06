@@ -1,6 +1,7 @@
 const CDN = require("./models/CDN");
 const axios = require("axios");
 const Connection = require("./models/Connection");
+const dynamicSelector = require("./dynamicSelector");
 
 async function retrieveCDNStatus(cdn) {
 	if (cdn.type === "cache") {
@@ -57,6 +58,7 @@ class CDNAnalyzer {
 		this.intervalID = setInterval(async () => {
 			await this.saveCDNStatus();
 			await this.updateOptimalCDN(this.criterion);
+			await this.handleCostExceedance();
 		}, 1000);
 	}
 
@@ -179,9 +181,48 @@ class CDNAnalyzer {
 		this.optimalCDN = this.availableCDNs[0];
 	}
 	async handleCostExceedance() {
-		if (cost > this.targetCost) {
-			await this.updateOptimalCDN(this.criterion);
-			this.targetCost = cost;
+		//console.log("###########################################");
+		try {
+			const now = new Date();
+			const cdns = await CDN.find({});
+			const connectionCounts = await Connection.aggregate([
+				{ $match: { expiry: { $gt: now } } },
+				{ $group: { _id: "$cdn", count: { $sum: 1 } } },
+			]);
+			const connectionCountMap = {};
+			for (const item of connectionCounts) {
+				connectionCountMap[item._id] = item.count;
+			}
+			//console.log("CountMap:", connectionCountMap);
+			let totalCost = 0;
+			let totalConnections = 0;
+			for (const cdn of cdns) {
+				const count = connectionCountMap[cdn.id] || 0;
+				totalCost += cdn.cost * count;
+				totalConnections += count;
+			}
+			//console.log("Cost, Connections:", totalCost, totalConnections);
+			// if (totalConnections && totalCost / totalConnections > this.targetCost) {
+			// 	const minimumCost = Math.min(...cdns.map((cdn) => cdn.cost));
+			// 	const thresholdPrice =
+			// 		minimumCost + (this.targetCost - minimumCost) * 0.5;
+			// 	const exceededCDNs = cdns.filter((cdn) => cdn.cost > thresholdPrice);
+			// 	//console.log("Exceeded CDNS:", exceededCDNs);
+			// 	const exceededConnections = await Connection.find({
+			// 		cdn: { $in: exceededCDNs },
+			// 		expiry: { $gt: now },
+			// 	});
+			// 	//console.log("Excedded Connections:", exceededConnections);
+
+			// 	await dynamicSelector.distributeConnections(
+			// 		exceededConnections,
+			// 		this.availableCDNs,
+			// 		thresholdPrice,
+			// 	);
+			// }
+		} catch (error) {
+			console.error("Error calculating average cost:", error);
+			return;
 		}
 	}
 }

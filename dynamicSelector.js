@@ -33,9 +33,17 @@ class DynamicSelector {
 		return selectedCDN;
 	}
 	async distributeConnections(connections, availableCDNs, cost) {
-		const targetCDNs = availableCDNs.filter(
-			(cdn) => cdn.cost != null && cdn.cost <= cost,
+		let targetCDNs = availableCDNs.filter(
+			(cdn) =>
+				cdn.cost != null && cdn.status.isDown !== true && cdn.cost <= cost,
 		);
+		if (targetCDNs.length === 0) {
+			targetCDNs = availableCDNs.filter((cdn) => cdn.status.isDown !== true);
+		}
+		if (targetCDNs.length === 0) {
+			console.log("All servers are down");
+			return;
+		}
 		const groupSize = Math.ceil(connections.length / targetCDNs.length);
 		for (let i = 0; i < targetCDNs.length; i++) {
 			for (let j = 0; j < groupSize; j++) {

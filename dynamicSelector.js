@@ -45,12 +45,15 @@ class DynamicSelector {
 			return;
 		}
 		const groupSize = Math.ceil(connections.length / targetCDNs.length);
+		const savePromises = [];
+
 		for (let i = 0; i < targetCDNs.length; i++) {
 			for (let j = 0; j < groupSize; j++) {
 				connections[i * groupSize + j].CDN = targetCDNs[i];
-				connections[i * groupSize + j].save();
+				savePromises.push(connections[i * groupSize + j].save());
 			}
 		}
+		await Promise.all(savePromises);
 	}
 }
 

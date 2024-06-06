@@ -6,17 +6,17 @@ const dynamicSelector = require("./dynamicSelector");
 const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
 const app = express();
 
-// logging middleware
-app.use((req, res, next) => {
-	const start = Date.now();
-	res.on("finish", () => {
-		const duration = Date.now() - start;
-		console.log(
-			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
-		);
-	});
-	next();
-});
+// // logging middleware
+// app.use((req, res, next) => {
+// 	const start = Date.now();
+// 	res.on("finish", () => {
+// 		const duration = Date.now() - start;
+// 		console.log(
+// 			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
+// 		);
+// 	});
+// 	next();
+// });
 
 // // parse cookies
 // app.use(cookieParser());

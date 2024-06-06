@@ -122,6 +122,6 @@ class ConnectionManager {
 	}
 }
 
-const connectionManager = new ConnectionManager(5000);
+const connectionManager = new ConnectionManager(6000);
 
 module.exports = connectionManager;

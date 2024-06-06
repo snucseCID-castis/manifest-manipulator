@@ -37,12 +37,13 @@ class ConnectionManager {
 	}
 
 	async logConnectionRequest(connection, mediaPlaylistName, time) {
-		if (connection.requestLogs.has(mediaPlaylistName)) {
-			const requestTimes = connection.requestLogs.get(mediaPlaylistName);
+		const logKey = mediaPlaylistName.split(".")[0];
+		if (connection.requestLogs.has(logKey)) {
+			const requestTimes = connection.requestLogs.get(logKey);
 			requestTimes.push(time);
-			connection.requestLogs.set(mediaPlaylistName, requestTimes);
+			connection.requestLogs.set(logKey, requestTimes);
 		} else {
-			connection.requestLogs.set(mediaPlaylistName, [time]);
+			connection.requestLogs.set(logKey, [time]);
 		}
 		await connection.save();
 	}
@@ -72,15 +73,15 @@ class ConnectionManager {
 		return connectionCount;
 	}
 	async blacklistFromDelay(connection, currentTime, mediaPlaylistName) {
-		const relatedLogs = connection.requestLogs.get(mediaPlaylistName);
-		if (relatedLogs.length === 0) {
-			return [];
-		}
-		if (
-			currentTime - relatedLogs[relatedLogs.length - 1] >
-			this.delayThreshold
-		) {
-			return [connection.cdn];
+		const logKey = mediaPlaylistName.split(".")[0];
+		if (connection.requestLogs.has(logKey)) {
+			const relatedLogs = connection.requestLogs.get(logKey);
+			if (
+				currentTime - relatedLogs[relatedLogs.length - 1] >
+				this.delayThreshold
+			) {
+				return [connection.cdn];
+			}
 		}
 		return [];
 	}

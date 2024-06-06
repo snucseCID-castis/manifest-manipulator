@@ -1,7 +1,6 @@
 const CDN = require("./models/CDN");
 const axios = require("axios");
 const Connection = require("./models/Connection");
-const dynamicSelector = require("./dynamicSelector");
 
 async function retrieveCDNStatus(cdn) {
 	if (cdn.type === "cache") {
@@ -227,11 +226,11 @@ class CDNAnalyzer {
 			) {
 				//console.log("Exceedance detected");
 				if (minimumCost < this.targetCost) {
-					dynamicSelector.changeCostLimit(
+					this.dynamicSelector.changeCostLimit(
 						minimumCost + (this.targetCost - minimumCost) * this.setRatio,
 					);
 				} else {
-					dynamicSelector.changeCostLimit(minimumCost);
+					this.dynamicSelector.changeCostLimit(minimumCost);
 				}
 			}
 		} catch (error) {

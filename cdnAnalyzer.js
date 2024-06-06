@@ -215,7 +215,9 @@ class CDNAnalyzer {
 			}
 			//console.log("Cost, Connections:", totalCost, totalConnections);
 			const minimumCost = Math.min(
-				...this.availableCDNs.map((cdn) => cdn.cost),
+				...this.availableCDNs
+					.filter((cdn) => cdn.status.isDown !== true)
+					.map((cdn) => cdn.cost),
 			);
 			//console.log("##################################");
 			//console.log(totalConnections, totalCost, minimumCost, this.targetCost);

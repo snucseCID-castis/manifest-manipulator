@@ -50,10 +50,11 @@ const optimalCDNCriteria = {
 class CDNAnalyzer {
 	optimalCDN = null;
 
-	constructor(CDNs, lastResort, criterion) {
+	constructor(CDNs, lastResort, criterion, targetCost) {
 		this.availableCDNs = CDNs;
 		this.lastResort = lastResort;
 		this.criterion = criterion;
+		this.targetCost = targetCost;
 		this.intervalID = setInterval(async () => {
 			await this.saveCDNStatus();
 			await this.updateOptimalCDN(this.criterion);
@@ -70,6 +71,10 @@ class CDNAnalyzer {
 
 	updateCriterion(criterion) {
 		this.criterion = criterion;
+	}
+
+	updateTargetCost(cost) {
+		this.targetCost = cost;
 	}
 
 	parseCriterion(criterion) {
@@ -176,9 +181,15 @@ class CDNAnalyzer {
 		this.availableCDNs = scoredCDNs.map((scoredCDN) => scoredCDN.CDN);
 		this.optimalCDN = this.availableCDNs[0];
 	}
+	async handleCostExceedance() {
+		if (cost > this.targetCost) {
+			await this.updateOptimalCDN(this.criterion);
+			this.targetCost = cost;
+		}
+	}
 }
 
-async function CDNAnalyzerFactory(criterion) {
+async function CDNAnalyzerFactory(criterion, targetCost) {
 	const CDNs = await getAllCDNs();
 	for (const CDN of CDNs) {
 		CDN.status = {
@@ -197,7 +208,7 @@ async function CDNAnalyzerFactory(criterion) {
 		await CDN.save();
 	}
 	const lastResort = await CDN.findOne({ type: "cloudfront" });
-	const cdnAnalyzer = new CDNAnalyzer(CDNs, lastResort, criterion);
+	const cdnAnalyzer = new CDNAnalyzer(CDNs, lastResort, criterion, targetCost);
 	return cdnAnalyzer;
 }
 

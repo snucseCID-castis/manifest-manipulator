@@ -1,22 +1,22 @@
 const express = require("express");
-const connectionManager = require("./connectionManager");
+const ConnectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
 const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
 const app = express();
 
-// logging middleware
-app.use((req, res, next) => {
-	const start = Date.now();
-	res.on("finish", () => {
-		const duration = Date.now() - start;
-		console.log(
-			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
-		);
-	});
-	next();
-});
+// // logging middleware
+// app.use((req, res, next) => {
+// 	const start = Date.now();
+// 	res.on("finish", () => {
+// 		const duration = Date.now() - start;
+// 		console.log(
+// 			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
+// 		);
+// 	});
+// 	next();
+// });
 
 // // parse cookies
 // app.use(cookieParser());
@@ -31,7 +31,9 @@ async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
 		optimalCDNCriteria.BPSMMperConnCntMM,
+		0.9,
 	);
+	const connectionManager = new ConnectionManager(5000);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();

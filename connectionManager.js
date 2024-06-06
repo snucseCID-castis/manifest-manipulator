@@ -2,7 +2,9 @@ const Connection = require("./models/Connection");
 const MediaPlaylist = require("./models/MediaPlaylist");
 
 class ConnectionManager {
-	delayThreshold = 5000;
+	constructor(delayThreshold) {
+		this.delayThreshold = delayThreshold;
+	}
 
 	async createConnection() {
 		const connection = new Connection();
@@ -88,4 +90,4 @@ class ConnectionManager {
 	}
 }
 
-module.exports = new ConnectionManager();
+module.exports = ConnectionManager;

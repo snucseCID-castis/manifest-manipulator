@@ -89,8 +89,4 @@ class ConnectionManager {
 	}
 }
 
-async function ConnectionManagerFactory(delayThreshold) {
-	return new ConnectionManager(delayThreshold);
-}
-
-module.exports = ConnectionManagerFactory;
+module.exports = ConnectionManager;

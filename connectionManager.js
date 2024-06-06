@@ -79,6 +79,7 @@ class ConnectionManager {
 		const logKey = mediaPlaylistName.split(".")[0];
 		if (connection.requestLogs.has(logKey)) {
 			const relatedLogs = connection.requestLogs.get(logKey);
+			//console.log(currentTime - relatedLogs[relatedLogs.length - 1]);
 			if (
 				currentTime - relatedLogs[relatedLogs.length - 1] >
 				this.delayThreshold

@@ -72,7 +72,8 @@ class ConnectionManager {
 		}
 		return connectionCount;
 	}
-	async blacklistFromDelay(connection, currentTime, mediaPlaylistName) {
+
+	blacklistFromDelay(connection, currentTime, mediaPlaylistName) {
 		const logKey = mediaPlaylistName.split(".")[0];
 		if (connection.requestLogs.has(logKey)) {
 			const relatedLogs = connection.requestLogs.get(logKey);

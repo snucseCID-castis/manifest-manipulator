@@ -84,24 +84,28 @@ class CDNAnalyzer {
 			cdn.status = status;
 			await cdn.save();
 		}
-		const connections = await Connection.find({ cdn: { $in: newlyDownCDNs } });
-		const minimumCost = Math.min(
-			...this.availableCDNs
-				.filter((cdn) => cdn.status.isDown !== true)
-				.map((cdn) => cdn.cost),
-		);
-		if (minimumCost >= this.targetCost) {
-			dynamicSelector.distributeConnections(
-				connections,
-				this.availableCDNs,
-				minimumCost,
+		if (newlyDownCDNs.length !== 0) {
+			const connections = await Connection.find({
+				cdn: { $in: newlyDownCDNs },
+			});
+			const minimumCost = Math.min(
+				...this.availableCDNs
+					.filter((cdn) => cdn.status.isDown !== true)
+					.map((cdn) => cdn.cost),
 			);
-		} else {
-			dynamicSelector.distributeConnections(
-				connections,
-				this.availableCDNs,
-				minimumCost + (this.targetCost - minimumCost) * this.triggerRatio,
-			);
+			if (minimumCost >= this.targetCost) {
+				dynamicSelector.distributeConnections(
+					connections,
+					this.availableCDNs,
+					minimumCost,
+				);
+			} else {
+				dynamicSelector.distributeConnections(
+					connections,
+					this.availableCDNs,
+					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio,
+				);
+			}
 		}
 	}
 

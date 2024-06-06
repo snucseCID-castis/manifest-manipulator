@@ -59,12 +59,12 @@ async function startServer() {
 		// TODO: should import proper availableCDNs
 		const selectedCDN = await dynamicSelector.selectCDN(
 			connection,
-			availableCDNs,
+			cdnAnalyzer.availableCDNs,
 			connectionManager.checkIfDelayed(connection, currentTime),
 		);
 		await connectionManager.updateCDN(connection, selectedCDN?._id);
 		const playlistContent = await playlistManager.fetchMediaPlaylist(
-			selectedCDNs,
+			selectedCDN,
 			req.params.mediaPlaylist,
 		);
 		if (!playlistContent) {

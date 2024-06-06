@@ -225,7 +225,7 @@ class CDNAnalyzer {
 				totalCost / totalConnections >
 					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio
 			) {
-				console.log("Exceedance detected");
+				//console.log("Exceedance detected");
 				if (minimumCost < this.targetCost) {
 					dynamicSelector.changeCostLimit(
 						minimumCost + (this.targetCost - minimumCost) * this.setRatio,

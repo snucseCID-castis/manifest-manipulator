@@ -4,12 +4,27 @@ const connectionManager = require("./connectionManager");
 
 class DynamicSelector {
 	async selectCDN(connection, availableCDNs, blacklist) {
-		if (!connection.CDN || connection.CDN.status.isDown) {
-			return availableCDNs[0];
-		}
-		// TODO: implement criteria check for previous CDN
+		let selectedCDN = null;
+		for (const CDN of availableCDNs) {
+			if (blacklist.includes(CDN._id)) {
+				continue;
+			}
+			if (CDN.status.isDown) {
+				continue;
+			}
+			// choose the first CDN which is not down and not in blacklist
+			if (!selectedCDN) {
+				selectedCDN = CDN;
+			}
 
-		return connection.CDN;
+			// but if currently connected CDN is not down and not in blacklist, do not change the CDN
+			if (CDN._id === connection.cdn) {
+				selectedCDN = CDN;
+				break;
+			}
+		}
+
+		return selectedCDN;
 	}
 }
 

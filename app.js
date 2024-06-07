@@ -76,16 +76,28 @@ async function startServer() {
 			selectedCDN = cdnAnalyzer.lastResort;
 		}
 
-		await connectionManager.updateCDN(connection, selectedCDN?._id);
-
-		const playlistContent = await playlistManager.fetchMediaPlaylist(
-			selectedCDN,
-			req.params.mediaPlaylist,
-		);
+		const { playlistContent, lastSegment } =
+			await playlistManager.fetchMediaPlaylist(
+				selectedCDN,
+				req.params.mediaPlaylist,
+				connection,
+			);
 
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}
+
+		await connectionManager.updateCDN(
+			connection,
+			selectedCDN?._id,
+			req.params.mediaPlaylist,
+		);
+
+		connectionManager.setLastSegment(
+			connection,
+			lastSegment,
+			req.params.mediaPlaylist,
+		);
 
 		await connectionManager.logConnectionRequest(
 			connection,

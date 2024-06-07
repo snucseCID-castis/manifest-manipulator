@@ -120,7 +120,7 @@ function getTokenizedMasterPlaylist(content, connectionId) {
 	return playlistStr;
 }
 
-function reconstructMediaPlaylist(m3u8, cdnURL) {
+function reconstructMediaPlaylist(m3u8, cdn, connection, mediaPlaylistName) {
 	const manifest = parseManifest(m3u8);
 	let playlistContent = "#EXTM3U\n";
 
@@ -135,17 +135,30 @@ function reconstructMediaPlaylist(m3u8, cdnURL) {
 		playlistContent += `#EXT-X-TARGETDURATION:${manifest.targetDuration}\n`;
 	}
 
-	// substitute cdn url to every segment uri
-	// TODO: may need to vary cdn for every segment
-	if (manifest?.segments) {
+	// CDN has changed for connection
+	if (
+		connection.prevs.mediaPlaylistName &&
+		!cdn._id.equals(connection.prevs.mediaPlaylistName.cdn)
+	) {
+		const lastIndex = manifest.segments.findIndex(
+			(segment) =>
+				segment.uri === connection.prevs.mediaPlaylistName.lastSegment,
+		);
+		for (let i = lastIndex + 1; i < manifest.segments.length; i++) {
+			const segment = manifest.segments[i];
+			playlistContent += `#EXTINF:${segment.duration.toFixed(
+				3,
+			)},\n${ensureAbsoluteUrl(cdn.sourceBaseUrl, segment.uri)}\n`;
+		}
+	} else if (manifest.segments) {
 		for (const segment of manifest.segments) {
 			playlistContent += `#EXTINF:${segment.duration.toFixed(
 				3,
-			)},\n${ensureAbsoluteUrl(cdnURL, segment.uri)}\n`;
+			)},\n${ensureAbsoluteUrl(cdn.sourceBaseUrl, segment.uri)}\n`;
 		}
 	}
 
-	return playlistContent;
+	return { playlistContent, lastSegment: manifest.segments.pop()?.uri };
 }
 
 async function playlistManagerFactory() {
@@ -164,17 +177,17 @@ class PlaylistManager {
 		const playlist = await MasterPlaylist.findOne({ name });
 		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
 	}
-	async fetchMediaPlaylist(selectedCDN, name) {
+	async fetchMediaPlaylist(selectedCDN, name, connection) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {
 			return null;
 		}
 		//TODO: fetch from selected CDN
-		const contents = await fetchFromOrigin(mediaPlaylist.name);
+		const contents = await fetchFromOrigin(name);
 		if (!selectedCDN) {
 			return contents;
 		}
-		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);
+		return reconstructMediaPlaylist(contents, selectedCDN, connection, name);
 	}
 }
 

@@ -1,3 +1,4 @@
+const { ConnectionClosedEvent } = require("mongodb");
 const Connection = require("./models/Connection");
 const Delay = require("./models/Delay");
 
@@ -26,15 +27,46 @@ class ConnectionManager {
 		return connection;
 	}
 
-	async updateCDN(connection, cdnId) {
-		if (!cdnId) {
+	async updateCDN(connection, cdnId, mediaPlaylistName) {
+		if (!cdnId || connection.cdn?.equals(cdnId)) {
 			return;
 		}
 
+		if (connection.prevs.mediaPlaylistName) {
+			const mediaPlaylistKey = `prevs.${mediaPlaylistName}.cdn`;
+			await Connection.findOneAndUpdate(
+				{ _id: connection._id },
+				{
+					$set: {
+						cdn: cdnId,
+						[mediaPlaylistKey]: connection.cdn,
+					},
+				},
+			);
+		} else {
+			await Connection.findOneAndUpdate(
+				{ _id: connection._id },
+				{
+					$set: {
+						cdn: cdnId,
+						prevs: {
+							mediaPlaylistName: {
+								cdn: connection.cdn,
+							},
+						},
+					},
+				},
+			);
+		}
+
+		//mediaplaylist에 대한 null check를 하지 않으면 cdn만 update할 수 없음...근데 null check 하려면 db call한번 더해얗마
+	}
+
+	async setLastSegment(connection, lastSegment, mediaPlaylistName) {
+		const mediaPlaylistKey = `prevs.${mediaPlaylistName}.lastSegment`;
 		await Connection.findOneAndUpdate(
 			{ _id: connection._id },
-			{ $set: { cdn: cdnId } },
-			{ new: true, useFindAndModify: false },
+			{ $set: { [mediaPlaylistKey]: lastSegment } },
 		);
 	}
 

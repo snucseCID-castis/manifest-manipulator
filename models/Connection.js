@@ -10,6 +10,7 @@ const connectionSchema = new Schema(
 	{ optimisticConcurrency: true },
 );
 
+connectionSchema.index({ cdn: 1 });
 connectionSchema.index({ expiry: 1 }, { expireAfterSeconds: 60 });
 
 module.exports = mongoose.model("Connection", connectionSchema);

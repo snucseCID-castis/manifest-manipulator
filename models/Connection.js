@@ -9,8 +9,11 @@ const connectionSchema = new Schema(
 		prevs: {
 			type: Map,
 			of: {
-				cdn: { type: Schema.Types.ObjectId, ref: "CDN" },
-				lastSegment: { type: String, required: false, default: null },
+				type: Map,
+				of: {
+					lastSegment: { type: String, required: false, default: null },
+					lastUpdated: { type: Date, required: false, default: Date.now() },
+				},
 			},
 			default: {},
 		},

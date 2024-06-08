@@ -65,7 +65,7 @@ async function startServer() {
 			connection,
 			currentTime,
 			req.params.mediaPlaylist,
-		)
+		);
 
 		// TODO: should import proper availableCDNs
 		let selectedCDN = await dynamicSelector.selectCDN(
@@ -85,20 +85,19 @@ async function startServer() {
 				connection,
 			);
 
+		console.log(playlistContent);
+
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}
 
-		await connectionManager.updateCDN(
-			connection,
-			selectedCDN?._id,
-			req.params.mediaPlaylist,
-		);
+		await connectionManager.updateCDN(connection, selectedCDN?._id);
 
-		connectionManager.setLastSegment(
+		await connectionManager.setLastSegment(
 			connection,
 			lastSegment,
 			req.params.mediaPlaylist,
+			selectedCDN?._id,
 		);
 
 		await connectionManager.logConnectionRequest(

@@ -28,42 +28,37 @@ class ConnectionManager {
 	}
 
 	async updateCDN(connection, cdnId, mediaPlaylistName) {
-		if (!cdnId || connection.cdn?.equals(cdnId)) {
-			return;
-		}
-
-		if (connection.prevs.mediaPlaylistName) {
-			const mediaPlaylistKey = `prevs.${mediaPlaylistName}.cdn`;
+		const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
+		console.log("strippedMediaPlaylistName", strippedMediaPlaylistName);
+		if (connection.prevs[strippedMediaPlaylistName]) {
+			const mediaPlaylistKey = `prevs.${strippedMediaPlaylistName}.cdn`;
 			await Connection.findOneAndUpdate(
 				{ _id: connection._id },
 				{
 					$set: {
 						cdn: cdnId,
-						[mediaPlaylistKey]: connection.cdn,
+						[mediaPlaylistKey]: cdnId,
 					},
 				},
 			);
 		} else {
+			const mediaPlaylistKey = `prevs.${strippedMediaPlaylistName}`;
 			await Connection.findOneAndUpdate(
 				{ _id: connection._id },
 				{
 					$set: {
 						cdn: cdnId,
-						prevs: {
-							mediaPlaylistName: {
-								cdn: connection.cdn,
-							},
-						},
+						[mediaPlaylistKey]: { cdn: cdnId },
 					},
 				},
 			);
 		}
-
 		//mediaplaylist에 대한 null check를 하지 않으면 cdn만 update할 수 없음...근데 null check 하려면 db call한번 더해얗마
 	}
 
 	async setLastSegment(connection, lastSegment, mediaPlaylistName) {
-		const mediaPlaylistKey = `prevs.${mediaPlaylistName}.lastSegment`;
+		const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
+		const mediaPlaylistKey = `prevs.${strippedMediaPlaylistName}.lastSegment`;
 		await Connection.findOneAndUpdate(
 			{ _id: connection._id },
 			{ $set: { [mediaPlaylistKey]: lastSegment } },

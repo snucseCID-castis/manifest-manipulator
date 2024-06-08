@@ -123,6 +123,7 @@ function getTokenizedMasterPlaylist(content, connectionId) {
 function reconstructMediaPlaylist(m3u8, cdn, connection, mediaPlaylistName) {
 	const manifest = parseManifest(m3u8);
 	let playlistContent = "#EXTM3U\n";
+	const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
 
 	// TODO: can we add all the attributes automatically?
 	if (manifest.version) {
@@ -137,12 +138,12 @@ function reconstructMediaPlaylist(m3u8, cdn, connection, mediaPlaylistName) {
 
 	// CDN has changed for connection
 	if (
-		connection.prevs.mediaPlaylistName &&
-		!cdn._id.equals(connection.prevs.mediaPlaylistName.cdn)
+		connection.prevs[strippedMediaPlaylistName] &&
+		!cdn._id.equals(connection.prevs[strippedMediaPlaylistName]?.cdn)
 	) {
 		const lastIndex = manifest.segments.findIndex(
 			(segment) =>
-				segment.uri === connection.prevs.mediaPlaylistName.lastSegment,
+				segment.uri === connection.prevs[strippedMediaPlaylistName].lastSegment,
 		);
 		for (let i = lastIndex + 1; i < manifest.segments.length; i++) {
 			const segment = manifest.segments[i];

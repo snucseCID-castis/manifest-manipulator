@@ -61,15 +61,17 @@ async function startServer() {
 			return res.status(404).send("Not Found");
 		}
 
+		const blacklist = connectionManager.blacklistFromDelay(
+			connection,
+			currentTime,
+			req.params.mediaPlaylist,
+		)
+
 		// TODO: should import proper availableCDNs
 		let selectedCDN = await dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			connectionManager.blacklistFromDelay(
-				connection,
-				currentTime,
-				req.params.mediaPlaylist,
-			),
+			blacklist,
 		);
 
 		if (!selectedCDN) {

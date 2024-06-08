@@ -4,30 +4,26 @@ const Connection = require("./models/Connection");
 
 async function retrieveCDNStatus(cdn) {
 	if (cdn.type === "cache") {
-		const response = await axios.get(cdn.apiUrl);
-		if (response.status !== 200) {
-			// TODO: proper health check
+		try {
+			const response = await axios.get(cdn.apiUrl);
+			if (response.status !== 200) {
+				// TODO: proper health check
+				return {
+					isDown: true,
+				};
+			}
+			const data = response.data;
+			return {
+				connection_count: data.currentConnectionCount,
+				tps: data.currentTps,
+				bps: data.bitsPerSecond,
+				isDown: false,
+			};
+		} catch (error) {
 			return {
 				isDown: true,
 			};
 		}
-		const data = response.data;
-		return {
-			connection_count: data.currentConnectionCount,
-			tps: data.currentTps,
-			bps: data.bitsPerSecond,
-		};
-	}
-	// TODO: status retrieval for cloudfront
-	if (cdn.type === "cloudfront") {
-		// const response = await axios.get(cdnURL + selectedCDN.traffic_uri);
-		// const data = response.data;
-		// return {
-		//   connection_count: data.ConnectionCount,
-		//   tps: data.TPS,
-		//   bps: data.BPS,
-		// };
-		return cdn.status;
 	}
 }
 
@@ -202,6 +198,7 @@ class CDNAnalyzer {
 	}
 
 	async updateOptimalCDN(criterion) {
+		this.availableCDNs = await getAllCDNs();
 		// find the optimal CDN based on criterion and sort the list
 		if (!criterion) {
 			return;

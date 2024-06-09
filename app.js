@@ -61,31 +61,42 @@ async function startServer() {
 			return res.status(404).send("Not Found");
 		}
 
+		const blacklist = connectionManager.blacklistFromDelay(
+			connection,
+			currentTime,
+			req.params.mediaPlaylist,
+		);
+
 		// TODO: should import proper availableCDNs
 		let selectedCDN = await dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			connectionManager.blacklistFromDelay(
-				connection,
-				currentTime,
-				req.params.mediaPlaylist,
-			),
+			blacklist,
 		);
 
 		if (!selectedCDN) {
 			selectedCDN = cdnAnalyzer.lastResort;
 		}
 
-		await connectionManager.updateCDN(connection, selectedCDN?._id);
-
-		const playlistContent = await playlistManager.fetchMediaPlaylist(
-			selectedCDN,
-			req.params.mediaPlaylist,
-		);
+		const { playlistContent, lastSegment } =
+			await playlistManager.fetchMediaPlaylist(
+				selectedCDN,
+				req.params.mediaPlaylist,
+				connection,
+			);
 
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}
+
+		await connectionManager.updateCDN(connection, selectedCDN?._id);
+
+		await connectionManager.setLastSegment(
+			connection,
+			lastSegment,
+			req.params.mediaPlaylist,
+			selectedCDN?._id,
+		);
 
 		await connectionManager.logConnectionRequest(
 			connection,

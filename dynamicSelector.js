@@ -24,7 +24,7 @@ class DynamicSelector {
 			}
 
 			// but if currently connected CDN is not down and not in blacklist, do not change the CDN
-			if (CDN._id === connection.cdn) {
+			if (CDN._id.equals(connection.cdn)) {
 				selectedCDN = CDN;
 				break;
 			}

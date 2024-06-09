@@ -1,3 +1,4 @@
+const { ConnectionClosedEvent } = require("mongodb");
 const Connection = require("./models/Connection");
 const Delay = require("./models/Delay");
 
@@ -27,14 +28,31 @@ class ConnectionManager {
 	}
 
 	async updateCDN(connection, cdnId) {
-		if (!cdnId) {
-			return;
+		if (cdnId) {
+			await Connection.findOneAndUpdate(
+				{ _id: connection._id },
+				{
+					$set: {
+						cdn: cdnId,
+					},
+				},
+			);
 		}
+	}
+
+	async setLastSegment(connection, lastSegment, mediaPlaylistName, cdnId) {
+		const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
 
 		await Connection.findOneAndUpdate(
 			{ _id: connection._id },
-			{ $set: { cdn: cdnId } },
-			{ new: true, useFindAndModify: false },
+			{
+				$set: {
+					[`prevs.${strippedMediaPlaylistName}.${cdnId}`]: {
+						lastSegment,
+						lastUpdated: Date.now(),
+					},
+				},
+			},
 		);
 	}
 

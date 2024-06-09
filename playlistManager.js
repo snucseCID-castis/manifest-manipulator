@@ -120,9 +120,16 @@ function getTokenizedMasterPlaylist(content, connectionId) {
 	return playlistStr;
 }
 
-function reconstructMediaPlaylist(m3u8, cdnURL) {
+async function reconstructMediaPlaylist(
+	m3u8,
+	cdn,
+	connection,
+	mediaPlaylistName,
+) {
 	const manifest = parseManifest(m3u8);
 	let playlistContent = "#EXTM3U\n";
+	const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
+	const cdnToLastSegment = connection.prevs.get(strippedMediaPlaylistName);
 
 	// TODO: can we add all the attributes automatically?
 	if (manifest.version) {
@@ -135,17 +142,56 @@ function reconstructMediaPlaylist(m3u8, cdnURL) {
 		playlistContent += `#EXT-X-TARGETDURATION:${manifest.targetDuration}\n`;
 	}
 
-	// substitute cdn url to every segment uri
-	// TODO: may need to vary cdn for every segment
-	if (manifest?.segments) {
+	if (cdnToLastSegment) {
+		const cdnLastSegmentPairs = [...cdnToLastSegment];
+		cdnLastSegmentPairs.sort((a, b) => a[1].lastUpdated - b[1].lastUpdated);
+		const cdnLastSegmentIndexList = cdnLastSegmentPairs.map((pair) => ({
+			cdnId: pair[0],
+			lastSegment: pair[1].lastSegment,
+			lastSegmentIndex: manifest.segments.findIndex(
+				(segment) => segment.uri === pair[1].lastSegment,
+			),
+		}));
+		let curLastSegmentIndex = -1;
+		let curSourceBaseUrl = cdn.sourceBaseUrl;
+		let curCdnLastSegmentIndex = -1;
+		for (const [i, element] of cdnLastSegmentIndexList.entries()) {
+			if (element.lastSegmentIndex !== -1) {
+				curLastSegmentIndex = element.lastSegmentIndex;
+				curSourceBaseUrl = (await CDN.findById(element.cdnId)).sourceBaseUrl;
+				curCdnLastSegmentIndex = i;
+				break;
+			}
+		}
+		for (let i = 0; i < manifest.segments.length; i++) {
+			const segment = manifest.segments[i];
+			playlistContent += `#EXTINF:${segment.duration.toFixed(
+				3,
+			)},\n${ensureAbsoluteUrl(curSourceBaseUrl, segment.uri)}\n`;
+			if (i === curLastSegmentIndex) {
+				if (++curCdnLastSegmentIndex < cdnLastSegmentIndexList.length) {
+					curLastSegmentIndex =
+						cdnLastSegmentIndexList[curCdnLastSegmentIndex].lastSegmentIndex;
+					curSourceBaseUrl = (
+						await CDN.findById(
+							cdnLastSegmentIndexList[curCdnLastSegmentIndex].cdnId,
+						)
+					).sourceBaseUrl;
+				} else {
+					curLastSegmentIndex = -1;
+					curSourceBaseUrl = cdn.sourceBaseUrl;
+				}
+			}
+		}
+	} else if (manifest.segments) {
 		for (const segment of manifest.segments) {
 			playlistContent += `#EXTINF:${segment.duration.toFixed(
 				3,
-			)},\n${ensureAbsoluteUrl(cdnURL, segment.uri)}\n`;
+			)},\n${ensureAbsoluteUrl(cdn.sourceBaseUrl, segment.uri)}\n`;
 		}
 	}
 
-	return playlistContent;
+	return { playlistContent, lastSegment: manifest.segments.pop()?.uri };
 }
 
 async function playlistManagerFactory() {
@@ -164,17 +210,22 @@ class PlaylistManager {
 		const playlist = await MasterPlaylist.findOne({ name });
 		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
 	}
-	async fetchMediaPlaylist(selectedCDN, name) {
+	async fetchMediaPlaylist(selectedCDN, name, connection) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {
 			return null;
 		}
 		//TODO: fetch from selected CDN
-		const contents = await fetchFromOrigin(mediaPlaylist.name);
+		const contents = await fetchFromOrigin(name);
 		if (!selectedCDN) {
 			return contents;
 		}
-		return reconstructMediaPlaylist(contents, selectedCDN.sourceBaseUrl);
+		return await reconstructMediaPlaylist(
+			contents,
+			selectedCDN,
+			connection,
+			name,
+		);
 	}
 }
 

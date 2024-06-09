@@ -85,8 +85,6 @@ async function startServer() {
 				connection,
 			);
 
-		console.log(playlistContent);
-
 		if (!playlistContent) {
 			return res.status(404).send("Not Found");
 		}

@@ -144,7 +144,6 @@ async function reconstructMediaPlaylist(
 
 	if (cdnToLastSegment) {
 		const cdnLastSegmentPairs = [...cdnToLastSegment];
-		console.log("cdnLastSegmentPairs:", cdnLastSegmentPairs);
 		cdnLastSegmentPairs.sort((a, b) => a[1].lastUpdated - b[1].lastUpdated);
 		const cdnLastSegmentIndexList = cdnLastSegmentPairs.map((pair) => ({
 			cdnId: pair[0],
@@ -153,7 +152,6 @@ async function reconstructMediaPlaylist(
 				(segment) => segment.uri === pair[1].lastSegment,
 			),
 		}));
-		console.log("cdnLastSegmentIndexList:", cdnLastSegmentIndexList);
 		let curLastSegmentIndex = -1;
 		let curSourceBaseUrl = cdn.sourceBaseUrl;
 		let curCdnLastSegmentIndex = -1;

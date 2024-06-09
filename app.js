@@ -103,7 +103,6 @@ async function startServer() {
 			req.params.mediaPlaylist,
 			currentTime,
 		);
-
 		res.header("Content-Type", "application/vnd.apple.mpegurl");
 		return res.send(playlistContent);
 	});

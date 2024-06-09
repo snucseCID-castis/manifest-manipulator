@@ -82,6 +82,7 @@ function ensureRelativeUrl(url) {
 	}
 	return url;
 }
+
 function getTokenizedMasterPlaylist(content, connectionId) {
 	// Parse the original master playlist content
 	const parsedManifest = parseManifest(content);
@@ -206,15 +207,18 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
+  
 	async fetchMasterPlaylist(connectionId, name) {
 		const playlist = await MasterPlaylist.findOne({ name });
 		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
 	}
+  
 	async fetchMediaPlaylist(selectedCDN, name, connection) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {
 			return null;
 		}
+
 		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(name);
 		if (!selectedCDN) {

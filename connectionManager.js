@@ -1,58 +1,101 @@
-const mongoose = require("mongoose");
+const { ConnectionClosedEvent } = require("mongodb");
 const Connection = require("./models/Connection");
-const cookie = require("cookie");
+const Delay = require("./models/Delay");
+
 class ConnectionManager {
-	async getOrCreateConnection(req, res) {
-		const connectionId = req.cookies.connectionId;
+	constructor(delayThreshold) {
+		this.delayThreshold = delayThreshold;
+		this.delayLogs = [];
+	}
 
-		// If there's no connection ID in the cookie, create a new connection and set cookie
-		if (!connectionId) {
-			const connection = new Connection();
-			await connection.save();
-
-			res.setHeader(
-				"Set-Cookie",
-				cookie.serialize("connectionId", String(connection._id), {
-					httpOnly: true,
-				}),
-			);
-
-			return connection;
-		}
-
-		// Check if a connection exists for the given connection ID
-		let connection = await Connection.findOne({ _id: connectionId });
-
-		// If connection doesn't exist, create a new one
-		if (!connection) {
-			// Create a new connection with the provided connection ID
-			connection = new Connection({ _id: connectionId });
-			// Save the new connection to MongoDB
-			await connection.save();
-		} else {
-			// If connection exists, update its expiry to 10 seconds from now
-			await this.refreshConnection(connectionId);
-		}
-
+	async createConnection() {
+		const connection = new Connection();
+		await connection.save();
 		return connection;
 	}
 
-	async refreshConnection(connectionId) {
-		// Find the connection based on the connection ID
-		const connection = await Connection.findOne({ _id: connectionId });
-		// Update the expiry time to 10 seconds from now
-		connection.expiry = new Date(Date.now() + 10000);
+	async getConnection(connectionId) {
+		let connection = await Connection.findOne({ _id: connectionId });
+		if (!connection) {
+			connection = new Connection({
+				_id: connectionId,
+			});
+			await connection.save();
+		} else {
+			await this.refreshConnection(connection);
+		}
+		return connection;
+	}
+
+	async updateCDN(connection, cdnId) {
+		if (cdnId) {
+			await Connection.findOneAndUpdate(
+				{ _id: connection._id },
+				{
+					$set: {
+						cdn: cdnId,
+					},
+				},
+			);
+		}
+	}
+
+	async setLastSegment(connection, lastSegment, mediaPlaylistName, cdnId) {
+		const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{
+				$set: {
+					[`prevs.${strippedMediaPlaylistName}.${cdnId}`]: {
+						lastSegment,
+						lastUpdated: Date.now(),
+					},
+				},
+			},
+		);
+	}
+
+	async refreshConnection(connection) {
+		const newExpiry = new Date(Date.now() + 10000);
 		// Save the updated connection to MongoDB
-		await connection.save();
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{ $set: { expiry: newExpiry } },
+			{ new: true, useFindAndModify: false },
+		);
+	}
+
+	async logConnectionRequest(connection, mediaPlaylistName, time) {
+		const logKey = mediaPlaylistName.split(".")[0];
+		const update = {};
+		const updatePath = `requestLogs.${logKey}`;
+
+		// 현재 로그가 있는 경우에는 배열에 새로운 시간을 추가하고, 없는 경우에는 새로운 배열을 생성
+		update[updatePath] = { $each: [time], $slice: -10 };
+
+		await Connection.findOneAndUpdate(
+			{ _id: connection._id },
+			{ $push: update },
+			{ new: true, useFindAndModify: false },
+		);
+		// if (connection.requestLogs.has(logKey)) {
+		// 	const requestTimes = connection.requestLogs.get(logKey);
+		// 	requestTimes.push(time);
+		// 	connection.requestLogs.set(logKey, requestTimes);
+		// } else {
+		// 	connection.requestLogs.set(logKey, [time]);
+		// }
+		// await connection.save();
 	}
 
 	async setConnectionCDN(connectionId, cdnId) {
-		// Find the connection based on the connection ID
-		const connection = await Connection.findOne({ _id: connectionId });
-		// Set the CDN for the connection
-		connection.cdn = cdnId;
-		// Save the updated connection to MongoDB
-		await connection.save();
+		await Connection.findOneAndUpdate(
+			{ _id: connectionId },
+			{ $set: { cdn: cdnId } },
+			{ new: true, useFindAndModify: false },
+		);
 	}
 
 	async getConnectionCount() {
@@ -70,6 +113,33 @@ class ConnectionManager {
 		}
 		return connectionCount;
 	}
+
+	blacklistFromDelay(connection, currentTime, mediaPlaylistName) {
+		const logKey = mediaPlaylistName.split(".")[0];
+		if (connection.requestLogs.has(logKey)) {
+			const relatedLogs = connection.requestLogs.get(logKey);
+			if (
+				currentTime - relatedLogs[relatedLogs.length - 1] >
+				this.delayThreshold
+			) {
+				const delay = new Delay({
+					cdn: connection.cdn,
+					connection: connection._id,
+					time: currentTime,
+				});
+				this.delayLogs.push(delay);
+				return [connection.cdn];
+			}
+		}
+		return [];
+	}
+
+	async saveDelayLogs() {
+		await Delay.insertMany(this.delayLogs);
+		this.delayLogs = [];
+	}
 }
 
-module.exports = new ConnectionManager();
+const connectionManager = new ConnectionManager(5500);
+
+module.exports = connectionManager;

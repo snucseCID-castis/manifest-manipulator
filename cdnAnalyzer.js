@@ -254,13 +254,7 @@ class CDNAnalyzer {
 				} else {
 					this.dynamicSelector.changeCostLimit(minimumCost);
 				}
-			} else {
-				this.dynamicSelector.changeCostLimit(null);
 			}
-			
-			// console.log(totalConnections)
-			// console.log("Cost: ", totalCost / totalConnections, " / ", this.targetCost);
-			// console.log("minimumCost: ", minimumCost);
 		} catch (error) {
 			console.error("Error calculating average cost:", error);
 			return;

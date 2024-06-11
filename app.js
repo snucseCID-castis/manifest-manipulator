@@ -28,7 +28,6 @@ const app = express();
 // });
 
 async function startServer() {
-	// initialize Delay collection
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
 		optimalCDNCriteria.BPSMMperConnCntMM,

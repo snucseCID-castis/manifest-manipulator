@@ -1,22 +1,22 @@
-const Delay = require("./models/Delay");
+const DelayLog = require("./models/DelayLog");
 
 class StatusLogger {
 	delayLogs = [];
 
 	appendDelayLog(prevCdnName, newCdnName, connectionId, time) {
-		const delay = new Delay({
+		const delayLog = new DelayLog({
 			prevCdnName: prevCdnName,
 			newCdnName: newCdnName,
 			connection: connectionId,
 			time: time,
 		});
-		this.delayLogs.push(delay);
+		this.delayLogs.push(delayLog);
 
 		console.log(`[Delay] prev CDN: ${prevCdnName} -> new CDN: ${newCdnName}`);
 	}
 
 	async saveDelayLogs() {
-		await Delay.insertMany(this.delayLogs);
+		await DelayLog.insertMany(this.delayLogs);
 		this.delayLogs = [];
 	}
 }

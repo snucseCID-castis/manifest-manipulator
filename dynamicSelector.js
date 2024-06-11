@@ -1,4 +1,3 @@
-const Delay = require("./models/Delay");
 const statusLogger = require("./statusLogger");
 
 class DynamicSelector {

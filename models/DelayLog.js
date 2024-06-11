@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const delaySchema = new Schema({
+const delayLogSchema = new Schema({
 	prevCdnName: { type: String, required: true },
 	newCdnName : { type: String, required: true },
 	connection: {
@@ -12,4 +12,4 @@ const delaySchema = new Schema({
 	time: { type: Date, required: true },
 });
 
-module.exports = mongoose.model("Delay", delaySchema, "Delay");
+module.exports = mongoose.model("DelayLog", delayLogSchema, "DelayLog");

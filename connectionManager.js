@@ -3,7 +3,6 @@ const Connection = require("./models/Connection");
 class ConnectionManager {
 	constructor(delayThreshold) {
 		this.delayThreshold = delayThreshold;
-		this.delayLogs = [];
 	}
 
 	async createConnection() {

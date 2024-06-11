@@ -17,7 +17,7 @@ const cdnSchema = new Schema({
 		bps: { type: Number, default: 0 },
 		tps: { type: Number, default: 0 },
 		connection_count: { type: Number, default: 0 },
-		mm_connection_count: { type: Number, default: 0 },
+		client_count: { type: Number, default: 0 },
 		metric_for_mm: { type: Number, default: 0 },
 	},
 });

@@ -36,12 +36,12 @@ const optimalCDNCriteria = {
 	BPS: "bps",
 	TPS: "tps",
 	ConnectionCount: "connection_count",
-	BPSperConnCnt: "bps_per_connection_count",
-	TPSperConnCnt: "tps_per_connection_count",
-	BPSperConnCntMM: "bps_per_connection_count_mm",
-	TPSperConnCntMM: "tps_per_connection_count_mm",
-	BPSMMperConnCntMM: "bps_mm_per_connection_count_mm",
-	TPSMMperConnCntMM: "tps_mm_per_connection_count_mm",
+	BPSperConn: "bps_per_connection",
+	TPSperConn: "tps_per_connection",
+	BPSperClient: "bps_per_client",
+	TPSperClient: "tps_per_client",
+	BPSMMperClient: "bps_mm_per_client",
+	TPSMMperClient: "tps_mm_per_client",
 };
 
 class CDNAnalyzer {
@@ -124,10 +124,10 @@ class CDNAnalyzer {
 
 	parseCriterion(criterion) {
 		const metric = criterion.split("_")[0];
-		const unit = criterion.endsWith("mm")
-			? "MM"
-			: criterion.includes("per")
-				? "CDN"
+		const unit = criterion.endsWith("client")
+			? "CLIENT"
+			: criterion.endsWith("connection")
+				? "CONNECTION"
 				: null;
 		const metricForMM = criterion.includes("_mm_");
 
@@ -147,28 +147,28 @@ class CDNAnalyzer {
 			cdn: CDN._id,
 			expiry: { $gt: new Date() },
 		});
-		const mmConnectionCount = currentConnections.length;
+		const clientCount = currentConnections.length;
 
 		const { metric, unit, metricForMM } = parsedCriterion;
 
 		// if unit is null, only use metric of CDN: case 1, 2, 3
 		if (!unit) {
 			score = -1 * CDN.status[metric];
-			return { score, clientCount: mmConnectionCount };
+			return { score, clientCount };
 		}
 
-		// if unit is CDN, use connection count of CDN: case 4, 5
-		if (unit === "CDN") {
+		// if unit is CONNECTION, use connection count of CDN: case 4, 5
+		if (unit === "CONNECTION") {
 			if (CDN.status.connection_count === 0) {
 				score = Number.POSITIVE_INFINITY;
 				return { score, clientCount: 0 };
 			}
 			score = CDN.status[metric] / CDN.status.connection_count;
-			return { score, clientCount: mmConnectionCount };
+			return { score, clientCount: clientCount };
 		}
 
-		// if unit is MM: case 6, 7
-		if (mmConnectionCount === 0) {
+		// if unit is CLIENT: case 6, 7
+		if (clientCount === 0) {
 			score = Number.POSITIVE_INFINITY;
 			return { score, clientCount: 0 };
 		}
@@ -176,42 +176,42 @@ class CDNAnalyzer {
 		let currentMetric = CDN.status[metric];
 		// if metric is for MM, calculate the metric of MM: case 8, 9
 		if (metricForMM) {
-			let currentLoadCount = CDN.status.connection_count - mmConnectionCount;
+			let currentLoadCount = CDN.status.connection_count - clientCount;
 			if (currentLoadCount < 0) {
 				currentLoadCount = 0;
 			}
-			const lastMMCount = CDN.lastStatus.mm_connection_count;
-			const lastLoadCount = CDN.lastStatus.connection_count - lastMMCount;
+			const lastClientCount = CDN.lastStatus.client_count;	// TODO:
+			const lastLoadCount = CDN.lastStatus.connection_count - lastClientCount;
 
-			// [ currentMetric      [  mmConnectionCount, currentLoadCount         [  metricForMM(currentMetric)
-			//	  lastMetric  ]  =      lastMMCount,     lastLoadCount    ]    @     metricForLoad ]
+			// [ currentMetric      [ clientCount, currentLoadCount        [  metricForMM(currentMetric)
+			//	  lastMetric  ]  =    lastClientCount, lastLoadCount ]  @          metricForLoad        ]
 			const det =
-				mmConnectionCount * lastLoadCount - currentLoadCount * lastMMCount;
+				clientCount * lastLoadCount - currentLoadCount * lastClientCount;
 			const lastMetric = CDN.lastStatus[metric];
 
 			if (det !== 0) {
 				currentMetric =
-					(currentMetric * lastLoadCount - lastMetric * lastMMCount) / det; // metric for MM
+					(currentMetric * lastLoadCount - lastMetric * lastClientCount) / det; // metric for MM
 			} else {
 				// if det = 0, connection counts for MM and load are the same / or load is zero.
 				// Assume that the change of metric is evenly distributed to MM and load.
 				const metricDiff = currentMetric - lastMetric;
 				const metricDiffPerConn =
-					metricDiff / (mmConnectionCount + currentLoadCount);
+					metricDiff / (clientCount + currentLoadCount);
 				currentMetric =
-					CDN.lastStatus.metric_for_mm + metricDiffPerConn * mmConnectionCount;
+					CDN.lastStatus.metric_for_mm + metricDiffPerConn * clientCount;
 			}
 		}
 		CDN.lastStatus = {
 			bps: CDN.status.bps,
 			tps: CDN.status.tps,
 			connection_count: CDN.status.connection_count,
-			mm_connection_count: mmConnectionCount,
+			client_count: clientCount,
 			metric_for_mm: currentMetric,
 		};
 		await CDN.save();
-		score = currentMetric / mmConnectionCount;
-		return { score, clientCount: mmConnectionCount };
+		score = currentMetric / clientCount;
+		return { score, clientCount };
 	}
 
 	async updateOptimalCDN(criterion) {
@@ -324,7 +324,7 @@ async function CDNAnalyzerFactory(
 			bps: 0,
 			tps: 0,
 			connection_count: 0,
-			mm_connection_count: 0,
+			client_count: 0,
 			metric_for_mm: 0,
 		};
 		await CDN.save();

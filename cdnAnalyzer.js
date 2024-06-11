@@ -1,6 +1,7 @@
-const CDN = require("./models/CDN");
 const axios = require("axios");
+const CDN = require("./models/CDN");
 const Connection = require("./models/Connection");
+const statusLogger = require("./statusLogger");
 
 async function retrieveCDNStatus(cdn) {
 	if (cdn.type === "cache") {
@@ -45,6 +46,7 @@ const optimalCDNCriteria = {
 
 class CDNAnalyzer {
 	optimalCDN = null;
+	statusLogger = statusLogger;
 
 	constructor(
 		CDNs,
@@ -81,27 +83,34 @@ class CDNAnalyzer {
 			await cdn.save();
 		}
 		if (newlyDownCDNs.length !== 0) {
+			const currTime = Date.now();
 			const connections = await Connection.find({
 				cdn: { $in: newlyDownCDNs.map((cdn) => cdn._id) },
 			});
-			const minimumCost = Math.min(
+			const downCdnNames = newlyDownCDNs.map((cdn) => cdn.name);
+			const prevCdnConnCount = connections.length;
+
+			let minimumCost = Math.min(
 				...this.availableCDNs
 					.filter((cdn) => cdn.status.isDown !== true)
 					.map((cdn) => cdn.cost),
 			);
-			if (minimumCost >= this.targetCost) {
-				dynamicSelector.distributeConnections(
-					connections,
-					this.availableCDNs,
-					minimumCost,
-				);
-			} else {
-				dynamicSelector.distributeConnections(
-					connections,
-					this.availableCDNs,
-					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio,
-				);
+			if (minimumCost < this.targetCost) {
+				minimumCost += (this.targetCost - minimumCost) * this.triggerRatio;
 			}
+
+			const distributedConnCounts = await dynamicSelector.distributeConnections(
+				connections,
+				this.availableCDNs,
+				minimumCost,
+			);
+
+			this.statusLogger.appendDownLog(
+				downCdnNames,
+				distributedConnCounts,
+				prevCdnConnCount,
+				currTime,
+			);
 		}
 	}
 
@@ -257,7 +266,7 @@ class CDNAnalyzer {
 			} else {
 				this.dynamicSelector.changeCostLimit(null);
 			}
-			
+
 			// console.log(totalConnections)
 			// console.log("Cost: ", totalCost / totalConnections, " / ", this.targetCost);
 			// console.log("minimumCost: ", minimumCost);

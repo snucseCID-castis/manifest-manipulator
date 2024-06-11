@@ -42,7 +42,7 @@ class DynamicSelector {
 		}
 
 		if (isDelayed) {
-			statusLogger.appendDelayLog(
+			this.statusLogger.appendDelayLog(
 				prevCdnName,
 				selectedCDN.name,
 				connection._id,
@@ -65,16 +65,32 @@ class DynamicSelector {
 			console.log("All servers are down");
 			return;
 		}
+
+		const distributedConnCounts = new Map();
+		for (let i = 0; i < targetCDNs.length; i++) {
+			distributedConnCounts.set(targetCDNs[i].name, 0);
+		}
+
 		const groupSize = Math.ceil(connections.length / targetCDNs.length);
 		const savePromises = [];
 
 		for (let i = 0; i < targetCDNs.length; i++) {
 			for (let j = 0; j < groupSize; j++) {
+				if (i * groupSize + j >= connections.length) {
+					break;
+				}
 				connections[i * groupSize + j].CDN = targetCDNs[i];
 				savePromises.push(connections[i * groupSize + j].save());
+
+				distributedConnCounts.set(
+					targetCDNs[i].name,
+					distributedConnCounts.get(targetCDNs[i].name) + 1,
+				);
 			}
 		}
 		await Promise.all(savePromises);
+
+		return distributedConnCounts;
 	}
 }
 

@@ -136,34 +136,41 @@ class CDNAnalyzer {
 
 	async scoreCDN(CDN, parsedCriterion) {
 		// if CDN is down, return negative infinity
+		let score;
 		if (CDN.status.isDown) {
-			return Number.NEGATIVE_INFINITY;
+			score = Number.NEGATIVE_INFINITY;
+			return { score, clientCount: 0 };
 		}
 
-		const { metric, unit, metricForMM } = parsedCriterion;
-
-		// if unit is null, only use metric of CDN: case 1, 2, 3
-		if (!unit) {
-			return -1 * CDN.status[metric];
-		}
-
-		// if unit is CDN, use connection count of CDN: case 4, 5
-		if (unit === "CDN") {
-			if (CDN.status.connection_count === 0) {
-				return Number.POSITIVE_INFINITY;
-			}
-			return CDN.status[metric] / CDN.status.connection_count;
-		}
-
-		// if unit is MM, should calculate connection count of MM: case 6, 7
+		// calculate client
 		const currentConnections = await Connection.find({
 			cdn: CDN._id,
 			expiry: { $gt: new Date() },
 		});
 		const mmConnectionCount = currentConnections.length;
 
+		const { metric, unit, metricForMM } = parsedCriterion;
+
+		// if unit is null, only use metric of CDN: case 1, 2, 3
+		if (!unit) {
+			score = -1 * CDN.status[metric];
+			return { score, clientCount: mmConnectionCount };
+		}
+
+		// if unit is CDN, use connection count of CDN: case 4, 5
+		if (unit === "CDN") {
+			if (CDN.status.connection_count === 0) {
+				score = Number.POSITIVE_INFINITY;
+				return { score, clientCount: 0 };
+			}
+			score = CDN.status[metric] / CDN.status.connection_count;
+			return { score, clientCount: mmConnectionCount };
+		}
+
+		// if unit is MM: case 6, 7
 		if (mmConnectionCount === 0) {
-			return Number.POSITIVE_INFINITY;
+			score = Number.POSITIVE_INFINITY;
+			return { score, clientCount: 0 };
 		}
 
 		let currentMetric = CDN.status[metric];
@@ -203,11 +210,12 @@ class CDNAnalyzer {
 			metric_for_mm: currentMetric,
 		};
 		await CDN.save();
-		return currentMetric / mmConnectionCount;
+		score = currentMetric / mmConnectionCount;
+		return { score, clientCount: mmConnectionCount };
 	}
 
 	async updateOptimalCDN(criterion) {
-		this.availableCDNs = await getAllCDNs();
+		this.availableCDNs = await getAllCDNs(); // TODO: remove this for performance
 		// find the optimal CDN based on criterion and sort the list
 		if (!criterion) {
 			return;
@@ -217,10 +225,30 @@ class CDNAnalyzer {
 
 		const scoredCDNs = await Promise.all(
 			this.availableCDNs.map(async (CDN) => {
-				const score = await this.scoreCDN(CDN, parsedCriterion);
-				return { CDN, score };
+				const { score, clientCount } = await this.scoreCDN(
+					CDN,
+					parsedCriterion,
+				);
+				return { CDN, score, clientCount };
 			}),
 		);
+
+		// for performance logging
+		const currTime = Date.now();
+		const delayMap = this.logger.getDelayCount();
+		const performanceMap = new Map();
+
+		for (const { CDN, clientCount } of scoredCDNs) {
+			const cdnName = CDN.name;
+			const delayCount = delayMap.get(cdnName) || 0;
+			const isDown = CDN.status.isDown;
+			performanceMap.set(cdnName, {
+				isDown,
+				clientCount,
+				delayCount,
+			});
+		}
+		this.logger.appendPerfLog(performanceMap, currTime);
 
 		// sort availableCDNs based on score
 		scoredCDNs.sort((a, b) => b.score - a.score);

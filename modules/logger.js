@@ -1,10 +1,12 @@
 const DelayLog = require("../models/DelayLog");
 const DownLog = require("../models/DownLog");
+const PerfLog = require("../models/PerfLog");
 
 class Logger {
 	totalDelayLogs = [];
 	delayLogs = [];
 	downLogs = [];
+	perfLogs = [];
 
 	appendDelayLog(prevCdnName, newCdnName, connectionId, time) {
 		const delayLog = new DelayLog({
@@ -31,23 +33,48 @@ class Logger {
 		for (const [cdnName, count] of distributedConnCounts) {
 			message += `\t -> ${cdnName}: ${count} connections\n`;
 		}
-
 		console.log(message);
 	}
 
-	async saveDelayLogs() {
-		await DelayLog.insertMany(this.totalDelayLogs);
+	appendPerfLog(perfMap, time) {
+		const perfLog = new PerfLog({
+			performanceMap: perfMap,
+			time: time,
+		});
+		this.perfLogs.push(perfLog);
+
+		let message = "[Performance]\n";
+		for (const [cdnName, perf] of perfMap) {
+			if (perf.isDown) {
+				message += `${cdnName}: DOWN!!!\n`;
+			} else {
+				message += `${cdnName}: ${perf.clientCount} clients connecting | ${perf.delayCount} clients delayed\n`;
+			}
+		}
+		console.log(message);
 	}
 
-	async saveDownLogs() {
+	async saveLogs() {
+		await DelayLog.insertMany(this.totalDelayLogs);
 		await DownLog.insertMany(this.downLogs);
+		await PerfLog.insertMany(this.perfLogs);
 	}
 
 	getDelayCount() {
-		const count = this.delayLogs.length;
+		const countMap = new Map();
+		for (const log of this.delayLogs) {
+			const key = log.prevCdnName;
+			if (!countMap.has(key)) {
+				countMap.set(key, 1);
+			} else {
+				countMap.set(key, countMap.get(key) + 1);
+			}
+		}
+
 		this.totalDelayLogs = this.totalDelayLogs.concat(this.delayLogs);
-		delayLogs = [];
-		return count;
+		this.delayLogs = [];
+
+		return countMap;
 	}
 }
 

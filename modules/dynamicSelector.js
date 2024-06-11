@@ -67,10 +67,6 @@ class DynamicSelector {
 		}
 
 		const distributedConnCounts = new Map();
-		for (let i = 0; i < targetCDNs.length; i++) {
-			distributedConnCounts.set(targetCDNs[i].name, 0);
-		}
-
 		const groupSize = Math.ceil(connections.length / targetCDNs.length);
 		const savePromises = [];
 
@@ -82,10 +78,14 @@ class DynamicSelector {
 				connections[i * groupSize + j].CDN = targetCDNs[i];
 				savePromises.push(connections[i * groupSize + j].save());
 
-				distributedConnCounts.set(
-					targetCDNs[i].name,
-					distributedConnCounts.get(targetCDNs[i].name) + 1,
-				);
+				if (!distributedConnCounts.has(targetCDNs[i].name)) {
+					distributedConnCounts.set(targetCDNs[i].name, 1);
+				} else {
+					distributedConnCounts.set(
+						targetCDNs[i].name,
+						distributedConnCounts.get(targetCDNs[i].name) + 1,
+					);
+				}
 			}
 		}
 		await Promise.all(savePromises);

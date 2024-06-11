@@ -12,4 +12,7 @@ const delayLogSchema = new Schema({
 	time: { type: Date, required: true },
 });
 
+delayLogSchema.index({ prevCdnName: 1 });
+delayLogSchema.index({ time: -1 });
+
 module.exports = mongoose.model("DelayLog", delayLogSchema, "DelayLog");

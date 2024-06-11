@@ -1,4 +1,4 @@
-const Connection = require("./models/Connection");
+const Connection = require("../models/Connection");
 
 class ConnectionManager {
 	constructor(delayThreshold) {

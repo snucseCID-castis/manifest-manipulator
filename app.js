@@ -1,9 +1,9 @@
 const express = require("express");
-const ConnectionManager = require("./connectionManager");
-const playlistManagerFactory = require("./playlistManager");
-const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
-const dynamicSelector = require("./dynamicSelector");
-const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
+const ConnectionManager = require("./modules/connectionManager");
+const playlistManagerFactory = require("./modules/playlistManager");
+const CDNAnalyzerFactory = require("./modules/cdnAnalyzer").CDNAnalyzerFactory;
+const dynamicSelector = require("./modules/dynamicSelector");
+const optimalCDNCriteria = require("./modules/cdnAnalyzer").optimalCDNCriteria;
 const app = express();
 
 // // logging middleware

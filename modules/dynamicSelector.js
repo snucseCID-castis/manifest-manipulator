@@ -1,8 +1,8 @@
-const statusLogger = require("./statusLogger");
+const logger = require("./logger");
 
 class DynamicSelector {
 	costLimit = null;
-	statusLogger = statusLogger;
+	logger = logger;
 
 	changeCostLimit(costLimit) {
 		this.costLimit = costLimit;
@@ -42,7 +42,7 @@ class DynamicSelector {
 		}
 
 		if (isDelayed) {
-			this.statusLogger.appendDelayLog(
+			this.logger.appendDelayLog(
 				prevCdnName,
 				selectedCDN.name,
 				connection._id,

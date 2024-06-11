@@ -1,7 +1,7 @@
 const axios = require("axios");
-const CDN = require("./models/CDN");
-const Connection = require("./models/Connection");
-const statusLogger = require("./statusLogger");
+const CDN = require("../models/CDN");
+const Connection = require("../models/Connection");
+const logger = require("./logger");
 
 async function retrieveCDNStatus(cdn) {
 	if (cdn.type === "cache") {
@@ -46,7 +46,7 @@ const optimalCDNCriteria = {
 
 class CDNAnalyzer {
 	optimalCDN = null;
-	statusLogger = statusLogger;
+	logger = logger;
 
 	constructor(
 		CDNs,
@@ -105,7 +105,7 @@ class CDNAnalyzer {
 				minimumCost,
 			);
 
-			this.statusLogger.appendDownLog(
+			this.logger.appendDownLog(
 				downCdnNames,
 				distributedConnCounts,
 				prevCdnConnCount,

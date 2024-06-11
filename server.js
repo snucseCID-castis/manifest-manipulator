@@ -1,7 +1,7 @@
 const { app, startServer } = require("./app");
 const mongoose = require("mongoose");
 const DelayLog = require("./models/DelayLog");
-const statusLogger = require("./dynamicSelector");
+const logger = require("./modules/dynamicSelector");
 
 const port = process.env.PORT || 3000;
 const databaseURI = process.env.DATABASE_URI;

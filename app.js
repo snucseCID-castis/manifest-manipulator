@@ -1,5 +1,5 @@
 const express = require("express");
-const connectionManager = require("./connectionManager");
+const ConnectionManager = require("./connectionManager");
 const playlistManagerFactory = require("./playlistManager");
 const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./dynamicSelector");
@@ -37,6 +37,7 @@ async function startServer() {
 		0.9, //exceed check
 		0.5, //setting point
 	);
+	const connectionManager = new ConnectionManager(4500);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();
@@ -61,22 +62,19 @@ async function startServer() {
 			return res.status(404).send("Not Found");
 		}
 
-		const blacklist = connectionManager.blacklistFromDelay(
+		const isDelayed = connectionManager.checkDelay(
 			connection,
 			currentTime,
 			req.params.mediaPlaylist,
 		);
 
-		// TODO: should import proper availableCDNs
-		let selectedCDN = await dynamicSelector.selectCDN(
+		const selectedCDN = dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			blacklist,
+			cdnAnalyzer.lastResort,
+			isDelayed,
+			currentTime,
 		);
-
-		if (!selectedCDN) {
-			selectedCDN = cdnAnalyzer.lastResort;
-		}
 
 		const { playlistContent, lastSegment } =
 			await playlistManager.fetchMediaPlaylist(

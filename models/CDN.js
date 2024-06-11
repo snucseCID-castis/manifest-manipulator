@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const cdnSchema = new Schema({
+	name: { type: String, required: true, unique: true },
 	apiUrl: { type: String, unique: true },
 	sourceBaseUrl: { type: String, required: true, unique: true },
 	type: { type: String, required: true, enum: ["cache", "cloudfront"] },

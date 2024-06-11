@@ -1,18 +1,22 @@
-const CDN = require("./models/CDN");
-const Connection = require("./models/Connection");
-const connectionManager = require("./connectionManager");
+const Delay = require("./models/Delay");
+const statusLogger = require("./statusLogger");
 
 class DynamicSelector {
 	costLimit = null;
+	statusLogger = statusLogger;
 
 	changeCostLimit(costLimit) {
 		this.costLimit = costLimit;
 	}
 
-	async selectCDN(connection, availableCDNs, blacklist) {
+	selectCDN(connection, availableCDNs, lastResort, isDelayed, currTime) {
+		const blacklist = isDelayed ? [connection.cdn] : [];
+		let prevCdnName = null;
 		let selectedCDN = null;
+
 		for (const CDN of availableCDNs) {
 			if (blacklist.includes(CDN._id.toString())) {
+				prevCdnName = CDN.name;
 				continue;
 			}
 			if (CDN.status.isDown) {
@@ -34,8 +38,22 @@ class DynamicSelector {
 			}
 		}
 
+		if (!selectedCDN) {
+			selectedCDN = lastResort;
+		}
+
+		if (isDelayed) {
+			statusLogger.appendDelayLog(
+				prevCdnName,
+				selectedCDN.name,
+				connection._id,
+				currTime,
+			);
+		}
+
 		return selectedCDN;
 	}
+
 	async distributeConnections(connections, availableCDNs, cost) {
 		let targetCDNs = availableCDNs.filter(
 			(cdn) =>

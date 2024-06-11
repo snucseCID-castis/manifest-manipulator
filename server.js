@@ -1,7 +1,7 @@
 const { app, startServer } = require("./app");
 const mongoose = require("mongoose");
 const Delay = require("./models/Delay");
-const connectionManager = require("./connectionManager");
+const statusLogger = require("./dynamicSelector");
 
 const port = process.env.PORT || 3000;
 const databaseURI = process.env.DATABASE_URI;
@@ -25,7 +25,7 @@ mongoose
 				return;
 			}
 			isShuttingDown = true;
-			await connectionManager.saveDelayLogs();
+			// await statusLogger.saveDelayLogs();
 			mongoose.connection
 				.close()
 				.then(() => {

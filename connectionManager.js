@@ -122,14 +122,13 @@ class ConnectionManager {
 				currentTime - relatedLogs[relatedLogs.length - 1] >
 				this.delayThreshold
 			) {
-				// console.log(currentTime - relatedLogs[relatedLogs.length - 1])
 				const delay = new Delay({
 					cdn: connection.cdn,
 					connection: connection._id,
 					time: currentTime,
 				});
 				this.delayLogs.push(delay);
-				return [connection.cdn.toString()];
+				return [connection.cdn];
 			}
 		}
 		return [];
@@ -141,6 +140,6 @@ class ConnectionManager {
 	}
 }
 
-const connectionManager = new ConnectionManager(4500);
+const connectionManager = new ConnectionManager(5500);
 
 module.exports = connectionManager;

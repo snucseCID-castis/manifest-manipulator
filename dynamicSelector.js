@@ -12,10 +12,14 @@ class DynamicSelector {
 	async selectCDN(connection, availableCDNs, blacklist) {
 		let selectedCDN = null;
 		for (const CDN of availableCDNs) {
-			if (blacklist.includes(CDN._id)) {
+			if (blacklist.includes(CDN._id.toString())) {
 				continue;
 			}
 			if (CDN.status.isDown) {
+				continue;
+			}
+			// TODO: 비용 초과 시 CDN 변경 할까 말까
+			if (this.costLimit && CDN.cost > this.costLimit) {
 				continue;
 			}
 			// choose the first CDN which is not down and not in blacklist

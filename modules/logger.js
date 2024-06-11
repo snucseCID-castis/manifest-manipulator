@@ -60,6 +60,12 @@ class Logger {
 		await PerfLog.insertMany(this.perfLogs);
 	}
 
+	async initLogs() {
+		await DelayLog.deleteMany({});
+		await DownLog.deleteMany({});
+		await PerfLog.deleteMany({});
+	}
+
 	getDelayCount() {
 		const countMap = new Map();
 		for (const log of this.delayLogs) {

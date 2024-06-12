@@ -9,7 +9,7 @@ class DynamicSelector {
 	}
 
 	selectCDN(connection, availableCDNs, lastResort, isDelayed, currTime) {
-		const blacklist = isDelayed ? [connection.cdn] : [];
+		const blacklist = isDelayed ? [connection.cdn.toString()] : [];
 		let prevCdnName = null;
 		let selectedCDN = null;
 
@@ -19,6 +19,7 @@ class DynamicSelector {
 				continue;
 			}
 			if (CDN.status.isDown) {
+				console.log(CDN.name)
 				continue;
 			}
 			// TODO: 비용 초과 시 CDN 변경 할까 말까

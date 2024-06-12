@@ -80,7 +80,7 @@ class CDNAnalyzer {
 				newlyDownCDNs.push(cdn);
 			}
 			cdn.status = status;
-			await cdn.save();
+			// await cdn.save();
 		}
 		if (newlyDownCDNs.length !== 0) {
 			const currTime = Date.now();
@@ -89,6 +89,9 @@ class CDNAnalyzer {
 			});
 			const downCdnNames = newlyDownCDNs.map((cdn) => cdn.name);
 			const prevCdnConnCount = connections.length;
+			if (prevCdnConnCount === 0) {
+				return;
+			}
 
 			let minimumCost = Math.min(
 				...this.availableCDNs
@@ -143,11 +146,10 @@ class CDNAnalyzer {
 		}
 
 		// calculate client
-		const currentConnections = await Connection.find({
+		const clientCount = await Connection.countDocuments({
 			cdn: CDN._id,
 			expiry: { $gt: new Date() },
 		});
-		const clientCount = currentConnections.length;
 
 		const { metric, unit, metricForMM } = parsedCriterion;
 
@@ -248,6 +250,18 @@ class CDNAnalyzer {
 				delayCount,
 			});
 		}
+
+		const clientCountCF = await Connection.countDocuments({
+			cdn: this.lastResort._id,
+			expiry: { $gt: new Date() },
+		});
+		const delayCountCF = delayMap.get("CloudFront") || 0;
+		performanceMap.set("CloudFront", {
+			isDown: false,
+			clientCount: clientCountCF,
+			delayCount: delayCountCF,
+		});
+
 		this.logger.appendPerfLog(performanceMap, currTime);
 
 		// sort availableCDNs based on score

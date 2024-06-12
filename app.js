@@ -30,7 +30,7 @@ const app = express();
 async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
-		optimalCDNCriteria.BPSMMperConnCntMM,
+		optimalCDNCriteria.BPSMMperClient,
 		0.8, //targetCost
 		dynamicSelector,
 		0.9, //exceed check

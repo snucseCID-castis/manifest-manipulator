@@ -1,7 +1,7 @@
 const logger = require("./logger");
 
 class DynamicSelector {
-	costLimit = null;
+	costLimit = 0;
 	logger = logger;
 
 	changeCostLimit(costLimit) {

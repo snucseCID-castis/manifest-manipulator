@@ -46,13 +46,14 @@ const optimalCDNCriteria = {
 
 class CDNAnalyzer {
 	optimalCDN = null;
+	totalCost = 0;
 	logger = logger;
 
 	constructor(
 		CDNs,
 		lastResort,
 		criterion,
-		targetCost,
+		maximumCost,
 		dynamicSelector,
 		triggerRatio,
 		setRatio,
@@ -60,18 +61,18 @@ class CDNAnalyzer {
 		this.availableCDNs = CDNs;
 		this.lastResort = lastResort;
 		this.criterion = criterion;
-		this.targetCost = targetCost;
+		this.maximumCost = maximumCost;
 		this.dynamicSelector = dynamicSelector;
 		this.triggerRatio = triggerRatio; // threshold of checking cost exceedance
 		this.setRatio = setRatio; // setting point of cost when the cost exceedance
 		this.intervalID = setInterval(async () => {
-			await this.saveCDNStatus(this.dynamicSelector);
-			await this.updateOptimalCDN(this.criterion);
+			await this.saveCDNStatus();
 			await this.handleCostExceedance();
+			await this.updateOptimalCDN(this.criterion);
 		}, 1000);
 	}
 
-	async saveCDNStatus(dynamicSelector) {
+	async saveCDNStatus() {
 		const newlyDownCDNs = [];
 		for (const cdn of this.availableCDNs) {
 			const wasDown = cdn.status.isDown;
@@ -98,15 +99,16 @@ class CDNAnalyzer {
 					.filter((cdn) => cdn.status.isDown !== true)
 					.map((cdn) => cdn.cost),
 			);
-			if (minimumCost < this.targetCost) {
-				minimumCost += (this.targetCost - minimumCost) * this.triggerRatio;
+			if (minimumCost < this.maximumCost) {
+				minimumCost += (this.maximumCost - minimumCost) * this.triggerRatio;
 			}
 
-			const distributedConnCounts = await dynamicSelector.distributeConnections(
-				connections,
-				this.availableCDNs,
-				minimumCost,
-			);
+			const distributedConnCounts =
+				await this.dynamicSelector.distributeConnections(
+					connections,
+					this.availableCDNs,
+					minimumCost,
+				);
 
 			this.logger.appendDownLog(
 				downCdnNames,
@@ -121,8 +123,8 @@ class CDNAnalyzer {
 		this.criterion = criterion;
 	}
 
-	updateTargetCost(cost) {
-		this.targetCost = cost;
+	updateMaximumCost(cost) {
+		this.maximumCost = cost;
 	}
 
 	parseCriterion(criterion) {
@@ -182,7 +184,7 @@ class CDNAnalyzer {
 			if (currentLoadCount < 0) {
 				currentLoadCount = 0;
 			}
-			const lastClientCount = CDN.lastStatus.client_count;	// TODO:
+			const lastClientCount = CDN.lastStatus.client_count; // TODO:
 			const lastLoadCount = CDN.lastStatus.connection_count - lastClientCount;
 
 			// [ currentMetric      [ clientCount, currentLoadCount        [  metricForMM(currentMetric)
@@ -198,8 +200,7 @@ class CDNAnalyzer {
 				// if det = 0, connection counts for MM and load are the same / or load is zero.
 				// Assume that the change of metric is evenly distributed to MM and load.
 				const metricDiff = currentMetric - lastMetric;
-				const metricDiffPerConn =
-					metricDiff / (clientCount + currentLoadCount);
+				const metricDiffPerConn = metricDiff / (clientCount + currentLoadCount);
 				currentMetric =
 					CDN.lastStatus.metric_for_mm + metricDiffPerConn * clientCount;
 			}
@@ -262,7 +263,13 @@ class CDNAnalyzer {
 			delayCount: delayCountCF,
 		});
 
-		this.logger.appendPerfLog(performanceMap, currTime);
+		this.logger.appendPerfLog(
+			this.totalCost,
+			this.dynamicSelector.costLimit,
+			this.maximumCost,
+			performanceMap,
+			currTime,
+		);
 
 		// sort availableCDNs based on score
 		scoredCDNs.sort((a, b) => b.score - a.score);
@@ -270,6 +277,7 @@ class CDNAnalyzer {
 		this.availableCDNs = scoredCDNs.map((scoredCDN) => scoredCDN.CDN);
 		this.optimalCDN = this.availableCDNs[0];
 	}
+
 	async handleCostExceedance() {
 		try {
 			const now = new Date();
@@ -281,13 +289,18 @@ class CDNAnalyzer {
 			for (const item of connectionCounts) {
 				connectionCountMap[item._id] = item.count;
 			}
-			let totalCost = 0;
+			this.totalCost = 0;
 			let totalConnections = 0;
 			for (const cdn of this.availableCDNs) {
 				const count = connectionCountMap[cdn.id] || 0;
-				totalCost += cdn.cost * count;
+				this.totalCost += cdn.cost * count;
 				totalConnections += count;
 			}
+			// cost for last resort
+			const countCF = connectionCountMap[this.lastResort.id] || 0;
+			this.totalCost += this.lastResort.cost * countCF;
+			totalConnections += countCF;
+
 			const minimumCost = Math.min(
 				...this.availableCDNs
 					.filter((cdn) => cdn.status.isDown !== true)
@@ -295,23 +308,19 @@ class CDNAnalyzer {
 			);
 			if (
 				totalConnections &&
-				totalCost / totalConnections >
-					minimumCost + (this.targetCost - minimumCost) * this.triggerRatio
+				this.totalCost / totalConnections >
+					minimumCost + (this.maximumCost - minimumCost) * this.triggerRatio
 			) {
-				if (minimumCost < this.targetCost) {
+				if (minimumCost < this.maximumCost) {
 					this.dynamicSelector.changeCostLimit(
-						minimumCost + (this.targetCost - minimumCost) * this.setRatio,
+						minimumCost + (this.maximumCost - minimumCost) * this.setRatio,
 					);
 				} else {
 					this.dynamicSelector.changeCostLimit(minimumCost);
 				}
 			} else {
-				this.dynamicSelector.changeCostLimit(null);
+				this.dynamicSelector.changeCostLimit(0);
 			}
-
-			// console.log(totalConnections)
-			// console.log("Cost: ", totalCost / totalConnections, " / ", this.targetCost);
-			// console.log("minimumCost: ", minimumCost);
 		} catch (error) {
 			console.error("Error calculating average cost:", error);
 			return;
@@ -321,7 +330,7 @@ class CDNAnalyzer {
 
 async function CDNAnalyzerFactory(
 	criterion,
-	targetCost,
+	maximumCost,
 	dynamicSelector,
 	triggerRatio,
 	setRatio,
@@ -348,7 +357,7 @@ async function CDNAnalyzerFactory(
 		CDNs,
 		lastResort,
 		criterion,
-		targetCost,
+		maximumCost,
 		dynamicSelector,
 		triggerRatio,
 		setRatio,

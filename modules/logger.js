@@ -17,7 +17,7 @@ class Logger {
 	appendDelayLog(prevCdnName, newCdnName, connectionId, time) {
 		const krTime = this.KoreaTime(time);
 		const delayLog = new DelayLog({
-			prevCdnName: prevCdnName,
+			prevCdnName: prevCdnName | "",
 			newCdnName: newCdnName,
 			connection: connectionId,
 			time: krTime,
@@ -47,20 +47,24 @@ class Logger {
 		console.log(message);
 	}
 
-	appendPerfLog(perfMap, time) {
+	appendPerfLog(cost, costLimit, maxCost, perfMap, time) {
 		const krTime = this.KoreaTime(time);
 		const perfLog = new PerfLog({
+			currentCost: cost,
+			costLimit: costLimit,
+			maximumCost: maxCost,
 			performanceMap: perfMap,
 			time: krTime,
 		});
 		this.perfLogs.push(perfLog);
 
 		let message = `[Performance] ${krTime.toISOString()}\n`;
+		message += `(cost) ${cost} / ${maxCost} | limit: ${costLimit}\n`;
 		for (const [cdnName, perf] of perfMap) {
 			if (perf.isDown) {
 				message += `${cdnName}: DOWN!!!\n`;
 			} else {
-				message += `${cdnName}: ${perf.clientCount} clients connecting | ${perf.delayCount} clients delayed\n`;
+				message += `${cdnName}: connecting ${perf.clientCount} | delayed ${perf.delayCount} \n`;
 			}
 		}
 		console.log(message);

@@ -6,6 +6,13 @@ const dynamicSelector = require("./modules/dynamicSelector");
 const optimalCDNCriteria = require("./modules/cdnAnalyzer").optimalCDNCriteria;
 const app = express();
 
+// parameter seting
+const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for optimal CDN selection
+const maximumCost = 0.8; // absolute cost limit per client
+const triggerRatio = 0.9; // ratio of cost exceeding check
+const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
+////////
+
 // // logging middleware
 // app.use((req, res, next) => {
 // 	const start = Date.now();
@@ -30,11 +37,11 @@ const app = express();
 async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
-		optimalCDNCriteria.BPSMMperClient,
-		0.8, //targetCost
+		optimalCDNCriterion,
+		maximumCost,
 		dynamicSelector,
-		0.9, //exceed check
-		0.5, //setting point
+		triggerRatio,
+		setRatio,
 	);
 	const connectionManager = new ConnectionManager(4500);
 

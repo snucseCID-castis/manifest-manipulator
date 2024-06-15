@@ -296,10 +296,10 @@ class CDNAnalyzer {
 				this.totalCost += cdn.cost * count;
 				totalConnections += count;
 			}
-			// cost for last resort
-			const countCF = connectionCountMap[this.lastResort.id] || 0;
-			this.totalCost += this.lastResort.cost * countCF;
-			totalConnections += countCF;
+			// // cost for last resort
+			// const countCF = connectionCountMap[this.lastResort.id] || 0;
+			// this.totalCost += this.lastResort.cost * countCF;
+			// totalConnections += countCF;
 
 			const minimumCost = Math.min(
 				...this.availableCDNs

@@ -19,20 +19,19 @@ class DynamicSelector {
 				continue;
 			}
 			if (CDN.status.isDown) {
-				console.log(CDN.name)
 				continue;
 			}
-			// TODO: 비용 초과 시 CDN 변경 할까 말까
+			// if currently connected CDN is not down and not in blacklist, do not change the CDN
+			if (CDN._id.equals(connection.cdn)) {
+				selectedCDN = CDN;
+				break;
+			}
+			// cost condition is only considered when this is new connection
 			if (this.costLimit && CDN.cost > this.costLimit) {
 				continue;
 			}
-			// choose the first CDN which is not down and not in blacklist
+			// choose the first CDN which is not down and not in blacklist and has cost less than costLimit
 			if (!selectedCDN) {
-				selectedCDN = CDN;
-			}
-
-			// but if currently connected CDN is not down and not in blacklist, do not change the CDN
-			if (CDN._id.equals(connection.cdn)) {
 				selectedCDN = CDN;
 				break;
 			}

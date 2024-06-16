@@ -1,7 +1,7 @@
 require("dotenv").config();
-const CDN = require("./models/CDN");
-const MasterPlaylist = require("./models/MasterPlaylist");
-const MediaPlaylist = require("./models/MediaPlaylist");
+const CDN = require("../models/CDN");
+const MasterPlaylist = require("../models/MasterPlaylist");
+const MediaPlaylist = require("../models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
 
@@ -207,12 +207,12 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-  
+
 	async fetchMasterPlaylist(connectionId, name) {
 		const playlist = await MasterPlaylist.findOne({ name });
 		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
 	}
-  
+
 	async fetchMediaPlaylist(selectedCDN, name, connection) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {

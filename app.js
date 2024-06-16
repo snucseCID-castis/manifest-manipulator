@@ -1,10 +1,18 @@
 const express = require("express");
-const connectionManager = require("./connectionManager");
-const playlistManagerFactory = require("./playlistManager");
-const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
-const dynamicSelector = require("./dynamicSelector");
-const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
+const ConnectionManager = require("./modules/connectionManager");
+const playlistManagerFactory = require("./modules/playlistManager");
+const CDNAnalyzerFactory = require("./modules/cdnAnalyzer").CDNAnalyzerFactory;
+const dynamicSelector = require("./modules/dynamicSelector");
+const optimalCDNCriteria = require("./modules/cdnAnalyzer").optimalCDNCriteria;
 const app = express();
+
+// parameter seting
+const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for optimal CDN selection
+const maximumCost = 0.8; // absolute cost limit per client
+const triggerRatio = 0.9; // ratio of cost exceeding check
+const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
+const delayThreshold = 5000; // threshold for delay detection
+////////
 
 // // logging middleware
 // app.use((req, res, next) => {
@@ -28,15 +36,15 @@ const app = express();
 // });
 
 async function startServer() {
-	// initialize Delay collection
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
-		optimalCDNCriteria.BPSMMperConnCntMM,
-		0.8, //targetCost
+		optimalCDNCriterion,
+		maximumCost,
 		dynamicSelector,
-		0.9, //exceed check
-		0.5, //setting point
+		triggerRatio,
+		setRatio,
 	);
+	const connectionManager = new ConnectionManager(delayThreshold);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();
@@ -61,22 +69,19 @@ async function startServer() {
 			return res.status(404).send("Not Found");
 		}
 
-		const blacklist = connectionManager.blacklistFromDelay(
+		const isDelayed = connectionManager.checkDelay(
 			connection,
 			currentTime,
 			req.params.mediaPlaylist,
 		);
 
-		// TODO: should import proper availableCDNs
-		let selectedCDN = await dynamicSelector.selectCDN(
+		const selectedCDN = dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			blacklist,
+			cdnAnalyzer.lastResort,
+			isDelayed,
+			currentTime,
 		);
-
-		if (!selectedCDN) {
-			selectedCDN = cdnAnalyzer.lastResort;
-		}
 
 		const { playlistContent, lastSegment } =
 			await playlistManager.fetchMediaPlaylist(

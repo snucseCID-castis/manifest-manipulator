@@ -53,17 +53,18 @@ class DynamicSelector {
 		return selectedCDN;
 	}
 
-	async distributeConnections(connections, availableCDNs, cost) {
+	async distributeConnections(connections, availableCDNs, lastResort, cost) {
 		let targetCDNs = availableCDNs.filter(
 			(cdn) =>
 				cdn.cost != null && cdn.status.isDown !== true && cdn.cost <= cost,
 		);
+		// there is no CDN with cost less than 'cost'
 		if (targetCDNs.length === 0) {
 			targetCDNs = availableCDNs.filter((cdn) => cdn.status.isDown !== true);
 		}
+		// there isn't any CDN available, connect to last resort
 		if (targetCDNs.length === 0) {
-			console.log("All servers are down");
-			return;
+			targetCDNs = [lastResort];
 		}
 
 		const distributedConnCounts = new Map();

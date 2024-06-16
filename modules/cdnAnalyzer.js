@@ -107,6 +107,7 @@ class CDNAnalyzer {
 				await this.dynamicSelector.distributeConnections(
 					connections,
 					this.availableCDNs,
+					this.lastResort,
 					minimumCost,
 				);
 

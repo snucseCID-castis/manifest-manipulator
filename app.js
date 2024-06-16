@@ -11,6 +11,7 @@ const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for 
 const maximumCost = 0.8; // absolute cost limit per client
 const triggerRatio = 0.9; // ratio of cost exceeding check
 const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
+const delayThreshold = 5000; // threshold for delay detection
 ////////
 
 // // logging middleware
@@ -43,7 +44,7 @@ async function startServer() {
 		triggerRatio,
 		setRatio,
 	);
-	const connectionManager = new ConnectionManager(4500);
+	const connectionManager = new ConnectionManager(delayThreshold);
 
 	app.get("/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();

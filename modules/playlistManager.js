@@ -90,13 +90,13 @@ function getTokenizedMasterPlaylist(content, connectionId) {
 	// Iterate through each playlist in the parsed manifest
 	for (const playlist of parsedManifest.playlists) {
 		// Tokenize the URI by appending the connectionId
-		playlist.uri = `${connectionId}/${playlist.uri}`;
+		playlist.uri = `/api/${connectionId}/${playlist.uri}`;
 	}
 
 	for (const group in parsedManifest.mediaGroups.AUDIO) {
 		for (const name in parsedManifest.mediaGroups.AUDIO[group]) {
 			parsedManifest.mediaGroups.AUDIO[group][name].uri =
-				`${connectionId}/${parsedManifest.mediaGroups.AUDIO[group][name].uri}`;
+				`/api/${connectionId}/${parsedManifest.mediaGroups.AUDIO[group][name].uri}`;
 		}
 	}
 	let playlistStr = "#EXTM3U \n";

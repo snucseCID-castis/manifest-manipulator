@@ -1,10 +1,18 @@
 const express = require("express");
+const path = require("node:path");
+const http = require("node:http");
+const { Server } = require("socket.io");
 const ConnectionManager = require("./modules/connectionManager");
 const playlistManagerFactory = require("./modules/playlistManager");
 const CDNAnalyzerFactory = require("./modules/cdnAnalyzer").CDNAnalyzerFactory;
 const dynamicSelector = require("./modules/dynamicSelector");
 const optimalCDNCriteria = require("./modules/cdnAnalyzer").optimalCDNCriteria;
+
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer);
+
+global.io = io;
 
 // parameter seting
 const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for optimal CDN selection
@@ -46,7 +54,14 @@ async function startServer() {
 	);
 	const connectionManager = new ConnectionManager(delayThreshold);
 
-	app.get("/:masterPlaylist", async (req, res) => {
+	app.use(express.static(path.join(__dirname, "public")));
+
+	app.get("/", (req, res) => {
+		console.log("index");
+		res.sendFile(path.join(__dirname, "public", "index.html"));
+	});
+
+	app.get("/api/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();
 		const playlistContent = await playlistManager.fetchMasterPlaylist(
 			connection._id,
@@ -60,7 +75,7 @@ async function startServer() {
 		return res.send(playlistContent);
 	});
 
-	app.get("/:connectionId/:mediaPlaylist", async (req, res) => {
+	app.get("/api/:connectionId/:mediaPlaylist", async (req, res) => {
 		const currentTime = Date.now();
 		const connection = await connectionManager.getConnection(
 			req.params.connectionId,
@@ -113,4 +128,4 @@ async function startServer() {
 	});
 }
 
-module.exports = { app, startServer };
+module.exports = { httpServer, startServer };

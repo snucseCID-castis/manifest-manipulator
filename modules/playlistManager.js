@@ -132,7 +132,6 @@ async function reconstructMediaPlaylist(
 	const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
 	const cdnToLastSegment = connection.prevs.get(strippedMediaPlaylistName);
 
-	// TODO: can we add all the attributes automatically?
 	if (manifest.version) {
 		playlistContent += `#EXT-X-VERSION:${manifest.version}\n`;
 	}
@@ -219,7 +218,6 @@ class PlaylistManager {
 			return null;
 		}
 
-		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(name);
 		if (!selectedCDN) {
 			return contents;

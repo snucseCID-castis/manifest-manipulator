@@ -8,7 +8,6 @@ async function retrieveCDNStatus(cdn) {
 		try {
 			const response = await axios.get(cdn.apiUrl);
 			if (response.status !== 200) {
-				// TODO: proper health check
 				return {
 					isDown: true,
 				};
@@ -185,7 +184,7 @@ class CDNAnalyzer {
 			if (currentLoadCount < 0) {
 				currentLoadCount = 0;
 			}
-			const lastClientCount = CDN.lastStatus.client_count; // TODO:
+			const lastClientCount = CDN.lastStatus.client_count;
 			const lastLoadCount = CDN.lastStatus.connection_count - lastClientCount;
 
 			// [ currentMetric      [ clientCount, currentLoadCount        [  metricForMM(currentMetric)

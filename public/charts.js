@@ -36,13 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	socket.on("delayLog", (data) => {
 		displayText(
 			"delayText",
-			`User ${data.connection} delayed: Moved to ${data.newCdnName} [${data.time}]`,
+			`[${data.time}] User ${data.connection} delayed (Moved to ${data.newCdnName})`,
 		);
 	});
 
 	socket.on("downLog", (data) => {
 		const downCdnNamesText = data.downCdnNames.join(", ");
-		displayText("downText", `CDN ${downCdnNamesText} are down [${data.time}]`);
+		displayText("downText", `[${data.time}] CDN ${downCdnNamesText} are down`);
 	});
 });
 

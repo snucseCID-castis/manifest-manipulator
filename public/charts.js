@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const CFDelayChart = createChart(CFDelayCtx, "[CloudFront] Delay");
 
 	socket.on("perfLog", (data) => {
-		const time = data.time;
+		const time = new Date(data.time).toISOString();
 		console.log(time);
 		updateChart(costChart, data.currentCost, time);
 		updateChart(C1ConnChart, data.performanceMap["Cache 1"].clientCount, time);
@@ -67,6 +67,9 @@ const createChart = (ctx, label) => {
 					type: "time",
 					time: {
 						unit: "second",
+						displayFormats: {
+							second: "HH:mm:ss",
+						},
 					},
 				},
 				y: {

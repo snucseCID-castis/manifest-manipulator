@@ -10,7 +10,6 @@ class DynamicSelector {
 
 	selectCDN(connection, availableCDNs, lastResort, isDelayed, currTime) {
 		const blacklist = isDelayed ? [connection.cdn.toString()] : [];
-		console.log(blacklist);
 		let prevCdnName = null;
 		let chepeastCDN = null;
 		let selectedCDN = null;

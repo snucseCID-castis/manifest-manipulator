@@ -45,7 +45,7 @@ const optimalCDNCriteria = {
 
 class CDNAnalyzer {
 	optimalCDN = null;
-	totalCost = 0;
+	currentCost = 0;
 	logger = logger;
 
 	constructor(
@@ -264,7 +264,7 @@ class CDNAnalyzer {
 		});
 
 		this.logger.appendPerfLog(
-			this.totalCost,
+			this.currentCost,
 			this.dynamicSelector.costLimit,
 			this.maximumCost,
 			performanceMap,
@@ -289,11 +289,11 @@ class CDNAnalyzer {
 			for (const item of connectionCounts) {
 				connectionCountMap[item._id] = item.count;
 			}
-			this.totalCost = 0;
+			let totalCost = 0;
 			let totalConnections = 0;
 			for (const cdn of this.availableCDNs) {
 				const count = connectionCountMap[cdn.id] || 0;
-				this.totalCost += cdn.cost * count;
+				totalCost += cdn.cost * count;
 				totalConnections += count;
 			}
 			// // cost for last resort
@@ -306,10 +306,16 @@ class CDNAnalyzer {
 					.filter((cdn) => cdn.status.isDown !== true)
 					.map((cdn) => cdn.cost),
 			);
+			if (totalConnections === 0) {
+				this.currentCost = 0;
+				this.dynamicSelector.changeCostLimit(0);
+				return;
+			}
+
+			this.currentCost = totalCost / totalConnections;
 			if (
-				totalConnections &&
-				this.totalCost / totalConnections >
-					minimumCost + (this.maximumCost - minimumCost) * this.triggerRatio
+				this.currentCost >
+				minimumCost + (this.maximumCost - minimumCost) * this.triggerRatio
 			) {
 				if (minimumCost < this.maximumCost) {
 					this.dynamicSelector.changeCostLimit(

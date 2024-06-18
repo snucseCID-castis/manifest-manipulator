@@ -54,6 +54,7 @@ async function startServer() {
 	);
 	const connectionManager = new ConnectionManager(delayThreshold);
 
+	app.use("/static", express.static(path.join(__dirname, "node_modules")));
 	app.use(express.static(path.join(__dirname, "public")));
 
 	app.get("/", (req, res) => {

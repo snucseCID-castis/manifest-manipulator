@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const CFConnCtx = document.getElementById("CFConnChart").getContext("2d");
 	const CFDelayCtx = document.getElementById("CFDelayChart").getContext("2d");
 
-	const costChart = createChart(costCtx, "CDN Cost");
+	const costChart = createCostChart(costCtx, "CDN Cost");
 	const C1ConnChart = createChart(C1ConnCtx, "[Cache 1] Connections");
 	const C1DelayChart = createChart(C1DelayCtx, "[Cache 1] Delay");
 	const C2ConnChart = createChart(C2ConnCtx, "[Cache 2] Connections");
@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const time = new Date(data.time).toISOString();
 		console.log(time);
 		updateChart(costChart, data.currentCost, time);
+		updateCostLine(costChart, data.costLimit, data.maximumCost);
 		updateChart(C1ConnChart, data.performanceMap["Cache 1"].clientCount, time);
 		updateChart(C1DelayChart, data.performanceMap["Cache 1"].delayCount, time);
 		updateChart(C2ConnChart, data.performanceMap["Cache 2"].clientCount, time);
@@ -80,6 +81,70 @@ const createChart = (ctx, label) => {
 	});
 };
 
+const createCostChart = (ctx, label) => {
+	return new Chart(ctx, {
+		type: "line",
+		data: {
+			labels: [],
+			datasets: [
+				{
+					label: label,
+					data: [],
+					borderColor: "rgba(75, 192, 192, 1)",
+					borderWidth: 1,
+					fill: false,
+				},
+			],
+		},
+		options: {
+			scales: {
+				x: {
+					type: "time",
+					time: {
+						unit: "second",
+						displayFormats: {
+							second: "HH:mm:ss",
+						},
+					},
+				},
+				y: {
+					beginAtZero: true,
+				},
+			},
+			plugins: {
+				annotation: {
+					annotations: {
+						maxLine: {
+							type: "line",
+							yMax: 2,
+							yMin: 2,
+							borderColor: "rgba(255, 51, 0, 1)",
+							borderWidth: 1,
+							label: {
+								content: "Maximum Cost",
+								enabled: true,
+								position: "start",
+							},
+						},
+						setLine: {
+							type: "line",
+							yMax: 0,
+							yMin: 0,
+							borderColor: "rgba(0, 102, 255, 1)",
+							borderWidth: 1,
+							label: {
+								content: "Set Cost",
+								enabled: true,
+								position: "start",
+							},
+						},
+					},
+				},
+			},
+		},
+	});
+};
+
 const updateChart = (chart, data, time) => {
 	const maxDataPoints = 10;
 	console.log("updateChart: \n", chart.canvas.id, data, time);
@@ -91,6 +156,15 @@ const updateChart = (chart, data, time) => {
 
 	chart.data.labels.push(time);
 	chart.data.datasets[0].data.push(data);
+
+	chart.update();
+};
+
+const updateCostLine = (chart, costLimit, maximumCost) => {
+	chart.options.plugins.annotation.annotations.setLine.yMin = costLimit;
+	chart.options.plugins.annotation.annotations.setLine.yMax = costLimit;
+	chart.options.plugins.annotation.annotations.maxLine.yMin = maximumCost;
+	chart.options.plugins.annotation.annotations.maxLine.yMax = maximumCost;
 
 	chart.update();
 };

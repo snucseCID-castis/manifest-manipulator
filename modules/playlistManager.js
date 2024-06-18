@@ -1,7 +1,7 @@
 require("dotenv").config();
-const CDN = require("./models/CDN");
-const MasterPlaylist = require("./models/MasterPlaylist");
-const MediaPlaylist = require("./models/MediaPlaylist");
+const CDN = require("../models/CDN");
+const MasterPlaylist = require("../models/MasterPlaylist");
+const MediaPlaylist = require("../models/MediaPlaylist");
 const axios = require("axios");
 const m3u8Parser = require("m3u8-parser");
 
@@ -90,13 +90,13 @@ function getTokenizedMasterPlaylist(content, connectionId) {
 	// Iterate through each playlist in the parsed manifest
 	for (const playlist of parsedManifest.playlists) {
 		// Tokenize the URI by appending the connectionId
-		playlist.uri = `${connectionId}/${playlist.uri}`;
+		playlist.uri = `/api/${connectionId}/${playlist.uri}`;
 	}
 
 	for (const group in parsedManifest.mediaGroups.AUDIO) {
 		for (const name in parsedManifest.mediaGroups.AUDIO[group]) {
 			parsedManifest.mediaGroups.AUDIO[group][name].uri =
-				`${connectionId}/${parsedManifest.mediaGroups.AUDIO[group][name].uri}`;
+				`/api/${connectionId}/${parsedManifest.mediaGroups.AUDIO[group][name].uri}`;
 		}
 	}
 	let playlistStr = "#EXTM3U \n";
@@ -132,7 +132,6 @@ async function reconstructMediaPlaylist(
 	const strippedMediaPlaylistName = mediaPlaylistName.split(".")[0];
 	const cdnToLastSegment = connection.prevs.get(strippedMediaPlaylistName);
 
-	// TODO: can we add all the attributes automatically?
 	if (manifest.version) {
 		playlistContent += `#EXT-X-VERSION:${manifest.version}\n`;
 	}
@@ -207,19 +206,18 @@ class PlaylistManager {
 		this.masterPlaylists = masterPlaylists;
 		this.mediaPlaylists = mediaPlaylists;
 	}
-  
+
 	async fetchMasterPlaylist(connectionId, name) {
 		const playlist = await MasterPlaylist.findOne({ name });
 		return getTokenizedMasterPlaylist(playlist.contents, connectionId);
 	}
-  
+
 	async fetchMediaPlaylist(selectedCDN, name, connection) {
 		const mediaPlaylist = await MediaPlaylist.findOne({ name });
 		if (!mediaPlaylist) {
 			return null;
 		}
 
-		//TODO: fetch from selected CDN
 		const contents = await fetchFromOrigin(name);
 		if (!selectedCDN) {
 			return contents;

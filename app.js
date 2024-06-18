@@ -1,44 +1,46 @@
 const express = require("express");
-const connectionManager = require("./connectionManager");
-const playlistManagerFactory = require("./playlistManager");
-const CDNAnalyzerFactory = require("./cdnAnalyzer").CDNAnalyzerFactory;
-const dynamicSelector = require("./dynamicSelector");
-const optimalCDNCriteria = require("./cdnAnalyzer").optimalCDNCriteria;
+const path = require("node:path");
+const http = require("node:http");
+const { Server } = require("socket.io");
+const ConnectionManager = require("./modules/connectionManager");
+const playlistManagerFactory = require("./modules/playlistManager");
+const CDNAnalyzerFactory = require("./modules/cdnAnalyzer").CDNAnalyzerFactory;
+const dynamicSelector = require("./modules/dynamicSelector");
+const optimalCDNCriteria = require("./modules/cdnAnalyzer").optimalCDNCriteria;
+
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer);
 
-// // logging middleware
-// app.use((req, res, next) => {
-// 	const start = Date.now();
-// 	res.on("finish", () => {
-// 		const duration = Date.now() - start;
-// 		console.log(
-// 			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
-// 		);
-// 	});
-// 	next();
-// });
+global.io = io;
 
-// // parse cookies
-// app.use(cookieParser());
-
-// // store connection instance in request object
-// app.use(async (req, res, next) => {
-// 	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);
-// 	next();
-// });
+// parameter seting
+const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for optimal CDN selection
+const maximumCost = 2.0; // absolute cost limit per client
+const triggerRatio = 0.9; // ratio of cost exceeding check
+const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
+const delayThreshold = 4500; // threshold for delay detection
+////////
 
 async function startServer() {
-	// initialize Delay collection
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
-		optimalCDNCriteria.BPSMMperConnCntMM,
-		0.8, //targetCost
+		optimalCDNCriterion,
+		maximumCost,
 		dynamicSelector,
-		0.9, //exceed check
-		0.5, //setting point
+		triggerRatio,
+		setRatio,
 	);
+	const connectionManager = new ConnectionManager(delayThreshold);
 
-	app.get("/:masterPlaylist", async (req, res) => {
+	app.use("/static", express.static(path.join(__dirname, "node_modules")));
+	app.use(express.static(path.join(__dirname, "public")));
+
+	app.get("/", (req, res) => {
+		res.sendFile(path.join(__dirname, "public", "index.html"));
+	});
+
+	app.get("/api/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();
 		const playlistContent = await playlistManager.fetchMasterPlaylist(
 			connection._id,
@@ -52,7 +54,7 @@ async function startServer() {
 		return res.send(playlistContent);
 	});
 
-	app.get("/:connectionId/:mediaPlaylist", async (req, res) => {
+	app.get("/api/:connectionId/:mediaPlaylist", async (req, res) => {
 		const currentTime = Date.now();
 		const connection = await connectionManager.getConnection(
 			req.params.connectionId,
@@ -61,22 +63,19 @@ async function startServer() {
 			return res.status(404).send("Not Found");
 		}
 
-		const blacklist = connectionManager.blacklistFromDelay(
+		const isDelayed = connectionManager.checkDelay(
 			connection,
 			currentTime,
 			req.params.mediaPlaylist,
 		);
 
-		// TODO: should import proper availableCDNs
-		let selectedCDN = await dynamicSelector.selectCDN(
+		const selectedCDN = dynamicSelector.selectCDN(
 			connection,
 			cdnAnalyzer.availableCDNs,
-			blacklist,
+			cdnAnalyzer.lastResort,
+			isDelayed,
+			currentTime,
 		);
-
-		if (!selectedCDN) {
-			selectedCDN = cdnAnalyzer.lastResort;
-		}
 
 		const { playlistContent, lastSegment } =
 			await playlistManager.fetchMediaPlaylist(
@@ -108,4 +107,4 @@ async function startServer() {
 	});
 }
 
-module.exports = { app, startServer };
+module.exports = { httpServer, startServer };

@@ -1,7 +1,6 @@
-const { app, startServer } = require("./app");
+const { httpServer, startServer } = require("./app");
 const mongoose = require("mongoose");
-const Delay = require("./models/Delay");
-const connectionManager = require("./connectionManager");
+const logger = require("./modules/logger");
 
 const port = process.env.PORT || 3000;
 const databaseURI = process.env.DATABASE_URI;
@@ -11,21 +10,21 @@ mongoose
 	.then(async () => {
 		console.log("Connected to MongoDB");
 		let isShuttingDown = false;
-		await Delay.deleteMany({});
+		await logger.initLogs();
 		await startServer();
-		app.listen(port, () => {
+		httpServer.listen(port, () => {
 			console.log(`Server running on port ${port}`);
 		});
 
-		process.on("SIGINT", saveDelayLogsAndShutDown);
-		process.on("SIGTERM", saveDelayLogsAndShutDown);
+		process.on("SIGINT", saveLogsAndShutDown);
+		process.on("SIGTERM", saveLogsAndShutDown);
 
-		async function saveDelayLogsAndShutDown() {
+		async function saveLogsAndShutDown() {
 			if (isShuttingDown) {
 				return;
 			}
 			isShuttingDown = true;
-			await connectionManager.saveDelayLogs();
+			await logger.saveLogs();
 			mongoose.connection
 				.close()
 				.then(() => {

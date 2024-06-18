@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Chart</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script type="module" src="charts.js"></script>
+  </head>
+  <body>
+    <h1>Real-Time Data Charts</h1>
+    <div id="delayText">Connection Delay:</div>
+    <div id="downText">Server Down:</div>
+    <div class="chart-row single-chart">
+      <canvas id="costChart"></canvas>
+    </div>
+    <div class="chart-row">
+      <div class="chart-container">
+        <canvas id="C1ConnChart"></canvas>
+        <canvas id="C1DelayChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="C2ConnChart"></canvas>
+        <canvas id="C2DelayChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="CFConnChart"></canvas>
+        <canvas id="CFDelayChart"></canvas>
+      </div>
+    </div>
+  </body>
+</html>

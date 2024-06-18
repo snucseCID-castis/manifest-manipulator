@@ -16,9 +16,9 @@ global.io = io;
 
 // parameter seting
 const optimalCDNCriterion = optimalCDNCriteria.BPSMMperClient; // criterion for optimal CDN selection
-const maximumCost = 0.8; // absolute cost limit per client
+const maximumCost = 2.0; // absolute cost limit per client
 const triggerRatio = 0.9; // ratio of cost exceeding check
-const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
+const setRatio = 0.7; // ratio of cost which is used for stabilizing total cost
 const delayThreshold = 5000; // threshold for delay detection
 ////////
 

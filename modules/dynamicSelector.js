@@ -11,6 +11,7 @@ class DynamicSelector {
 	selectCDN(connection, availableCDNs, lastResort, isDelayed, currTime) {
 		const blacklist = isDelayed ? [connection.cdn.toString()] : [];
 		let prevCdnName = null;
+		let chepeastCDN = null;
 		let selectedCDN = null;
 
 		for (const CDN of availableCDNs) {
@@ -26,6 +27,11 @@ class DynamicSelector {
 				selectedCDN = CDN;
 				break;
 			}
+
+			if (!chepeastCDN || CDN.cost < chepeastCDN.cost) {
+				chepeastCDN = CDN;
+			}
+
 			// cost condition is only considered when this is new connection
 			if (this.costLimit && CDN.cost > this.costLimit) {
 				continue;
@@ -33,15 +39,21 @@ class DynamicSelector {
 			// choose the first CDN which is not down and not in blacklist and has cost less than costLimit
 			if (!selectedCDN) {
 				selectedCDN = CDN;
-				break;
 			}
 		}
 
 		if (!selectedCDN) {
-			selectedCDN = lastResort;
+			if (chepeastCDN) {
+				selectedCDN = chepeastCDN;
+			} else {
+				selectedCDN = lastResort;
+			}
 		}
 
 		if (isDelayed) {
+			if (!prevCdnName) {
+				prevCdnName = lastResort.name;
+			}
 			this.logger.appendDelayLog(
 				prevCdnName,
 				selectedCDN.name,

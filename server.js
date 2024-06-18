@@ -1,4 +1,4 @@
-const { app, startServer } = require("./app");
+const { httpServer, startServer } = require("./app");
 const mongoose = require("mongoose");
 const logger = require("./modules/logger");
 
@@ -12,7 +12,7 @@ mongoose
 		let isShuttingDown = false;
 		await logger.initLogs();
 		await startServer();
-		app.listen(port, () => {
+		httpServer.listen(port, () => {
 			console.log(`Server running on port ${port}`);
 		});
 

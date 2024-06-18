@@ -17,12 +17,13 @@ class Logger {
 	appendDelayLog(prevCdnName, newCdnName, connectionId, time) {
 		const krTime = this.KoreaTime(time);
 		const delayLog = new DelayLog({
-			prevCdnName: prevCdnName | "",
+			prevCdnName: prevCdnName,
 			newCdnName: newCdnName,
 			connection: connectionId,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.delayLogs.push(delayLog);
+		global.io.emit("delayLog", delayLog);
 
 		let message = `[Delay] ${krTime.toISOString()}\n`;
 		message += `prev CDN: ${prevCdnName} -> new CDN: ${newCdnName}\n`;
@@ -35,12 +36,16 @@ class Logger {
 			downCdnNames: downCdnNames,
 			distributedConnCounts: distributedConnCounts,
 			prevCdnConnCount: prevCdnConnCount,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.downLogs.push(downLog);
+		global.io.emit("downLog", downLog);
 
 		let message = `[Down] ${krTime.toISOString()}\n`;
-		message += `${downCdnNames.join(", ")}: total ${prevCdnConnCount} clients\n`;
+		message += `${downCdnNames.join(
+			", ",
+		)}: total ${prevCdnConnCount} clients\n`;
+
 		for (const [cdnName, count] of distributedConnCounts) {
 			message += `\t -> ${cdnName}: ${count} clients\n`;
 		}
@@ -54,9 +59,10 @@ class Logger {
 			costLimit: costLimit,
 			maximumCost: maxCost,
 			performanceMap: perfMap,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.perfLogs.push(perfLog);
+		global.io.emit("perfLog", perfLog);
 
 		let message = `[Performance] ${krTime.toISOString()}\n`;
 		message += `(cost) ${cost} / ${maxCost} | limit: ${costLimit}\n`;

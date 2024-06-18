@@ -81,9 +81,17 @@ const createChart = (ctx, label) => {
 };
 
 const updateChart = (chart, data, time) => {
+	const maxDataPoints = 10;
 	console.log("updateChart: \n", chart.canvas.id, data, time);
+
+	if (chart.data.labels.length > maxDataPoints) {
+		chart.data.labels.shift();
+		chart.data.datasets[0].data.shift();
+	}
+
 	chart.data.labels.push(time);
 	chart.data.datasets[0].data.push(data);
+
 	chart.update();
 };
 

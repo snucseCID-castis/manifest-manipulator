@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const delayLogSchema = new Schema({
 	prevCdnName: { type: String, required: true },
-	newCdnName : { type: String, required: true },
+	newCdnName: { type: String, required: true },
 	connection: {
 		type: Schema.Types.ObjectId,
 		ref: "Connection",

@@ -20,7 +20,7 @@ class Logger {
 			prevCdnName: prevCdnName | "",
 			newCdnName: newCdnName,
 			connection: connectionId,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.delayLogs.push(delayLog);
 		global.io.emit("delayLog", delayLog);
@@ -36,7 +36,7 @@ class Logger {
 			downCdnNames: downCdnNames,
 			distributedConnCounts: distributedConnCounts,
 			prevCdnConnCount: prevCdnConnCount,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.downLogs.push(downLog);
 		global.io.emit("downLog", downLog);
@@ -59,7 +59,7 @@ class Logger {
 			costLimit: costLimit,
 			maximumCost: maxCost,
 			performanceMap: perfMap,
-			time: krTime,
+			time: new Date(time),
 		});
 		this.perfLogs.push(perfLog);
 		global.io.emit("perfLog", perfLog);

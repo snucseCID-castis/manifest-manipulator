@@ -325,7 +325,9 @@ class CDNAnalyzer {
 					this.dynamicSelector.changeCostLimit(minimumCost);
 				}
 			} else {
-				this.dynamicSelector.changeCostLimit(0);
+				if (this.currentCost < this.dynamicSelector.costLimit) {
+					this.dynamicSelector.changeCostLimit(0);
+				}
 			}
 		} catch (error) {
 			console.error("Error calculating average cost:", error);

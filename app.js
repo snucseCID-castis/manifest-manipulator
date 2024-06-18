@@ -22,27 +22,6 @@ const setRatio = 0.7; // ratio of cost which is used for stabilizing total cost
 const delayThreshold = 5000; // threshold for delay detection
 ////////
 
-// // logging middleware
-// app.use((req, res, next) => {
-// 	const start = Date.now();
-// 	res.on("finish", () => {
-// 		const duration = Date.now() - start;
-// 		console.log(
-// 			`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
-// 		);
-// 	});
-// 	next();
-// });
-
-// // parse cookies
-// app.use(cookieParser());
-
-// // store connection instance in request object
-// app.use(async (req, res, next) => {
-// 	req.CDNConnection = await connectionManager.getOrCreateConnection(req, res);
-// 	next();
-// });
-
 async function startServer() {
 	const playlistManager = await playlistManagerFactory();
 	const cdnAnalyzer = await CDNAnalyzerFactory(
@@ -58,7 +37,6 @@ async function startServer() {
 	app.use(express.static(path.join(__dirname, "public")));
 
 	app.get("/", (req, res) => {
-		console.log("index");
 		res.sendFile(path.join(__dirname, "public", "index.html"));
 	});
 

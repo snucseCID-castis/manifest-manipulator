@@ -17,7 +17,7 @@ class Logger {
 	appendDelayLog(prevCdnName, newCdnName, connectionId, time) {
 		const krTime = this.KoreaTime(time);
 		const delayLog = new DelayLog({
-			prevCdnName: prevCdnName | "",
+			prevCdnName: prevCdnName,
 			newCdnName: newCdnName,
 			connection: connectionId,
 			time: new Date(time),

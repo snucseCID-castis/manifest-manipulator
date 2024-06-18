@@ -39,7 +39,6 @@ class DynamicSelector {
 			// choose the first CDN which is not down and not in blacklist and has cost less than costLimit
 			if (!selectedCDN) {
 				selectedCDN = CDN;
-				break;
 			}
 		}
 

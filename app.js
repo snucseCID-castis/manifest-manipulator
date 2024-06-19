@@ -15,11 +15,11 @@ const io = new Server(httpServer);
 global.io = io;
 
 // parameter seting
-const optimalCDNCriterion = optimalCDNCriteria.BPS; // criterion for optimal CDN selection
+const optimalCDNCriterion = optimalCDNCriteria.TPS; // criterion for optimal CDN selection
 const maximumCost = 2.0; // absolute cost limit per client
 const triggerRatio = 0.9; // ratio of cost exceeding check
 const setRatio = 0.5; // ratio of cost which is used for stabilizing total cost
-const delayThreshold = 4500; // threshold for delay detection
+const delayThreshold = 6000; // threshold for delay detection
 ////////
 
 async function startServer() {

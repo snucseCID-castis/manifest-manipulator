@@ -226,7 +226,7 @@ class CDNAnalyzer {
 	}
 
 	async updateOptimalCDN(criterion) {
-		this.availableCDNs = await getAllCDNs(); // TODO: remove this for performance
+		// this.availableCDNs = await getAllCDNs(); // TODO: remove this for performance
 		// find the optimal CDN based on criterion and sort the list
 		if (!criterion) {
 			return;

@@ -5,6 +5,10 @@ class ConnectionManager {
 		this.delayThreshold = delayThreshold;
 	}
 
+	updateDelayThreshold(threshold) {
+		this.delayThreshold = threshold;
+	}
+
 	async createConnection() {
 		const connection = new Connection();
 		await connection.save();

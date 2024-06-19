@@ -193,7 +193,8 @@ class CDNAnalyzer {
 				currentLoadCount = 0;
 			}
 			const lastClientCount = CDN.lastStatus.client_count;
-			const lastLoadCount = CDN.lastStatus.connection_count - lastClientCount;
+			const lastLoadCount =
+				CDN.lastStatus.connection_count - lastClientCount * 2;
 
 			// [ currentMetric      [ clientCount, currentLoadCount        [  metricForMM(currentMetric)
 			//	  lastMetric  ]  =    lastClientCount, lastLoadCount ]  @          metricForLoad        ]

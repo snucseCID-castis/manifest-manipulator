@@ -49,7 +49,7 @@ class Logger {
 		for (const [cdnName, count] of distributedConnCounts) {
 			message += `\t -> ${cdnName}: ${count} clients\n`;
 		}
-		// console.log(message);
+		//console.log(message);
 	}
 
 	appendPerfLog(cost, costLimit, maxCost, perfMap, time) {

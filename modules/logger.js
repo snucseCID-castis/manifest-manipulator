@@ -27,7 +27,7 @@ class Logger {
 
 		let message = `[Delay] ${krTime.toISOString()}\n`;
 		message += `prev CDN: ${prevCdnName} -> new CDN: ${newCdnName}\n`;
-		console.log(message);
+		// console.log(message);
 	}
 
 	appendDownLog(downCdnNames, distributedConnCounts, prevCdnConnCount, time) {
@@ -49,7 +49,7 @@ class Logger {
 		for (const [cdnName, count] of distributedConnCounts) {
 			message += `\t -> ${cdnName}: ${count} clients\n`;
 		}
-		console.log(message);
+		// console.log(message);
 	}
 
 	appendPerfLog(cost, costLimit, maxCost, perfMap, time) {
@@ -73,7 +73,7 @@ class Logger {
 				message += `${cdnName}: connecting ${perf.clientCount} | delayed ${perf.delayCount} \n`;
 			}
 		}
-		console.log(message);
+		// console.log(message);
 	}
 
 	async saveLogs() {

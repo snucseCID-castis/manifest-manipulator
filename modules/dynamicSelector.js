@@ -3,9 +3,19 @@ const logger = require("./logger");
 class DynamicSelector {
 	costLimit = 0;
 	logger = logger;
+	isStabilizing = false;
 
 	changeCostLimit(costLimit) {
-		this.costLimit = costLimit;
+		if (costLimit < 0) {
+			this.costLimit = 0;
+		} else {
+			this.costLimit = costLimit;
+		}
+		if (this.costLimit) {
+			this.isStabilizing = true;
+		} else {
+			this.isStabilizing = false;
+		}
 	}
 
 	selectCDN(connection, availableCDNs, lastResort, isDelayed, currTime) {

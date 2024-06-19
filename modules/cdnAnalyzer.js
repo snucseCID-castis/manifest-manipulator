@@ -127,6 +127,14 @@ class CDNAnalyzer {
 		this.maximumCost = cost;
 	}
 
+	updateTriggerRatio(ratio) {
+		this.triggerRatio = ratio;
+	}
+
+	updateSetRatio(ratio) {
+		this.setRatio = ratio;
+	}
+
 	parseCriterion(criterion) {
 		const metric = criterion.split("_")[0];
 		const unit = criterion.endsWith("client")
@@ -313,20 +321,26 @@ class CDNAnalyzer {
 			}
 
 			this.currentCost = totalCost / totalConnections;
-			if (
-				this.currentCost >
-				minimumCost + (this.maximumCost - minimumCost) * this.triggerRatio
-			) {
-				if (minimumCost < this.maximumCost) {
-					this.dynamicSelector.changeCostLimit(
-						minimumCost + (this.maximumCost - minimumCost) * this.setRatio,
-					);
-				} else {
-					this.dynamicSelector.changeCostLimit(minimumCost);
-				}
+			const triggerCost =
+				minimumCost + (this.maximumCost - minimumCost) * this.triggerRatio;
+
+			let costLimit;
+			if (minimumCost < this.maximumCost) {
+				costLimit =
+					minimumCost + (this.maximumCost - minimumCost) * this.setRatio;
 			} else {
+				costLimit = minimumCost;
+			}
+
+			if (this.dynamicSelector.isStabilizing) {
 				if (this.currentCost < this.dynamicSelector.costLimit) {
 					this.dynamicSelector.changeCostLimit(0);
+				} else {
+					this.dynamicSelector.changeCostLimit(costLimit); // renew the cost limit
+				}
+			} else {
+				if (this.currentCost > triggerCost) {
+					this.dynamicSelector.changeCostLimit(costLimit);
 				}
 			}
 		} catch (error) {

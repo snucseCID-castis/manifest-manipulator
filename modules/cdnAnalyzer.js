@@ -35,12 +35,12 @@ const optimalCDNCriteria = {
 	BPS: "bps",
 	TPS: "tps",
 	ConnectionCount: "connection_count",
-	BPSperConn: "bps_per_connection",
-	TPSperConn: "tps_per_connection",
-	BPSperClient: "bps_per_client",
-	TPSperClient: "tps_per_client",
-	BPSMMperClient: "bps_mm_per_client",
-	TPSMMperClient: "tps_mm_per_client",
+	BPSperConn: "bps-per-connection",
+	TPSperConn: "tps-per-connection",
+	BPSperClient: "bps-per-client",
+	TPSperClient: "tps-per-client",
+	BPSMMperClient: "bps-mm-per-client",
+	TPSMMperClient: "tps-mm-per-client",
 };
 
 class CDNAnalyzer {
@@ -136,13 +136,13 @@ class CDNAnalyzer {
 	}
 
 	parseCriterion(criterion) {
-		const metric = criterion.split("_")[0];
+		const metric = criterion.split("-")[0];
 		const unit = criterion.endsWith("client")
 			? "CLIENT"
 			: criterion.endsWith("connection")
 				? "CONNECTION"
 				: null;
-		const metricForMM = criterion.includes("_mm_");
+		const metricForMM = criterion.includes("-mm-");
 
 		return { metric, unit, metricForMM };
 	}

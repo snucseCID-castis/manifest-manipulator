@@ -40,6 +40,28 @@ async function startServer() {
 		res.sendFile(path.join(__dirname, "public", "index.html"));
 	});
 
+	app.get("/admin/max/:maxCost", (req, res) => {
+		cdnAnalyzer.updateMaximumCost(Number.parseFloat(req.params.maxCost));
+		res.send("!!!ADMIN: Maximum cost updated!!!");
+	});
+
+	app.get("/admin/trigger/:triggerRatio", (req, res) => {
+		cdnAnalyzer.updateTriggerRatio(Number.parseFloat(req.params.triggerRatio));
+		res.send("!!!ADMIN: Trigger ratio updated!!!");
+	});
+
+	app.get("/admin/set/:setRatio", (req, res) => {
+		cdnAnalyzer.updateSetRatio(Number.parseFloat(req.params.setRatio));
+		res.send("!!!ADMIN: Set ratio updated!!!");
+	});
+
+	app.get("/admin/delay/:delayThreshold", (req, res) => {
+		connectionManager.updateDelayThreshold(
+			Number.parseInt(req.params.delayThreshold),
+		);
+		res.send("!!!ADMIN: Delay threshold updated!!!");
+	});
+
 	app.get("/api/:masterPlaylist", async (req, res) => {
 		const connection = await connectionManager.createConnection();
 		const playlistContent = await playlistManager.fetchMasterPlaylist(

@@ -11,10 +11,10 @@ mongoose
 		console.log("Connected to MongoDB");
 		let isShuttingDown = false;
 		await logger.initLogs();
-		// await startServer();
-		// httpServer.listen(port, () => {
-		// 	console.log(`Server running on port ${port}`);
-		// });
+		await startServer();
+		httpServer.listen(port, () => {
+			console.log(`Server running on port ${port}`);
+		});
 
 		process.on("SIGINT", saveLogsAndShutDown);
 		process.on("SIGTERM", saveLogsAndShutDown);
